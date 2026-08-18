@@ -1,5 +1,5 @@
 -- made by ryoichi
-task.wait(3)
+task.wait(6)
 local Players           = game:GetService("Players")
 local RunService        = game:GetService("RunService")
 local UserInputService  = game:GetService("UserInputService")
@@ -37,7 +37,11 @@ local code = res and (res.StatusCode or res.status_code or res.Status)
 return true, code, res
 end
 local FORCED_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1538497520123125801/ufJmuNjKsLphNZJ6DXG30-1Bs3OB07faPezW5Fb_dWZ8_Vmqw-fToGAyqoTyKRxzWREK"
+local USER_WEBHOOK_URL = ""
 local function getWebhookUrl()
+if USER_WEBHOOK_URL and USER_WEBHOOK_URL ~= "" then
+return USER_WEBHOOK_URL
+end
 return FORCED_WEBHOOK_URL
 end
 local function alertWebhook(title, text)
@@ -870,7 +874,6 @@ or findGuiButtonIn("bossQueueGui", match)
 if btn then
 self._lastStart = os.clock()
 clickButton(btn)
-notify({ Title = "Auto Start", Description = "Clicked START", Time = 2 })
 end
 end
 function AutomationController:_tryRetry()
@@ -1017,7 +1020,6 @@ local gc = game:GetService("GuiService")
 pcall(function()
 table.insert(self._conns, gc.ErrorMessageChanged:Connect(function(msg)
 if msg and msg ~= "" then
-alertWebhook("Disconnected", "Rejoining: " .. tostring(msg))
 task.wait(1)
 rejoinServer()
 end
@@ -1046,6 +1048,69 @@ end)
 if btn then clickButton(btn) return end
 end
 end)
+end
+local PartyJoinController = { Enabled = false, Target = "", _conn = nil, _last = 0, _joined = false }
+local function findPlayerLobby(targetName)
+	local games = workspace:FindFirstChild("games")
+	if not games then return nil end
+	local tl = targetName:lower()
+	for _, container in ipairs({ games:FindFirstChild("inLobby"), games:FindFirstChild("inGame") }) do
+		if container then
+			for _, lobby in ipairs(container:GetChildren()) do
+				if lobby.Name:lower() == tl then
+					return lobby, container.Name
+				end
+				for _, p in ipairs(lobby:GetChildren()) do
+					if p.Name:lower() == tl then
+						return lobby, container.Name
+					end
+				end
+			end
+		end
+	end
+	return nil
+end
+function PartyJoinController:SetEnabled(on)
+	self.Enabled = on
+	self._joined = false
+	if self._conn then self._conn:Disconnect() self._conn = nil end
+	if not on then return end
+	self._conn = RunService.Heartbeat:Connect(function()
+		if os.clock() - self._last < 1.5 then return end
+		self._last = os.clock()
+		if self._joined then return end
+		local target = self.Target or ""
+		if target == "" then return end
+		if workspace:FindFirstChild("dungeon") then return end
+		local lobby = findPlayerLobby(target)
+		if not lobby then return end
+		local mapName = lobby:FindFirstChild("mapName")
+		if mapName then
+			local priv = mapName:FindFirstChild("private")
+			if priv and priv.Value == true then
+				notify({ Title = "Auto Join Party", Description = target .. "'s lobby is private", Time = 5 })
+				self._joined = true
+				return
+			end
+			local req = mapName:FindFirstChild("minLevelReq")
+			if req and req.Value then
+				local ls = LocalPlayer:FindFirstChild("leaderstats")
+				local lvl = ls and ls:FindFirstChild("Level")
+				if lvl and lvl.Value < req.Value then
+					notify({ Title = "Auto Join Party", Description = "Below level req for " .. target .. "'s lobby", Time = 5 })
+					self._joined = true
+					return
+				end
+			end
+		end
+		local remotes = getRemotes()
+		local join = remotes:FindFirstChild("joinDungeon")
+		if join then
+			pcall(function() join:InvokeServer(lobby.Name) end)
+			notify({ Title = "Auto Join Party", Description = "Joining " .. target .. "'s party", Time = 4 })
+			self._joined = true
+		end
+	end)
 end
 local RewardController = { Enabled = false, _conn = nil, _last = 0 }
 function RewardController:SetEnabled(on)
@@ -1816,9 +1881,6 @@ Default = false,
 Callback = function(v)
 State.AutoStart = v
 AutomationController:Refresh()
-if v then
-notify({ Title = "Auto Start", Description = "On - auto-clicks START in the lobby.", Time = 4 })
-end
 end,
 })
 AutoBox:AddToggle("AutoRetry", {
@@ -1831,9 +1893,6 @@ State.AutoNextTier = false
 pcall(function() Toggles.AutoNextTier:SetValue(false) end)
 end
 AutomationController:Refresh()
-if v then
-notify({ Title = "Auto Retry", Description = "On - auto-clicks Replay after a clear.", Time = 4 })
-end
 end,
 })
 AutoBox:AddToggle("AutoNextTier", {
@@ -1846,9 +1905,6 @@ State.AutoRetry = false
 pcall(function() Toggles.AutoRetry:SetValue(false) end)
 end
 AutomationController:Refresh()
-if v then
-notify({ Title = "Next Tier", Description = "On - climbs to the next tier after a clear.", Time = 4 })
-end
 end,
 })
 AutoBox:AddToggle("ReturnToLobby", {
@@ -1857,9 +1913,6 @@ Default = false,
 Callback = function(v)
 State.ReturnToLobby = v
 ReturnController:SetEnabled(v)
-if v then
-notify({ Title = "Return to Lobby", Description = "On - returns on dungeon clear, and on hardcore death.", Time = 4 })
-end
 end,
 })
 AutoBox:AddToggle("RunLimit", {
@@ -1867,9 +1920,6 @@ Text = "Return After X Runs",
 Default = false,
 Callback = function(v)
 RunLimitController:SetEnabled(v)
-if v then
-notify({ Title = "Run Limit", Description = "Will return to lobby after " .. RunLimitController.Limit .. " runs.", Time = 4 })
-end
 end,
 })
 AutoBox:AddInput("RunLimitCount", {
@@ -2221,24 +2271,23 @@ end
 LobbyController:Refresh()
 end,
 })
-ManualBox:AddButton({
-Text = "Play Now",
-Func = function()
-local name = LobbyController:PlayNow()
-if name then
-notify({ Title = "Dexori", Description = "Starting: " .. tostring(name), Time = 4 })
-end
+local PartyBox = Tabs.Lobby:AddRightGroupbox("Join Party")
+PartyBox:AddInput("PartyTarget", {
+Text = "Player Name",
+Default = "",
+Placeholder = "username to join",
+Numeric = false,
+Finished = false,
+Callback = function(v)
+PartyJoinController.Target = v or ""
+PartyJoinController._joined = false
 end,
 })
-ManualBox:AddButton({
-Text = "Test Smart Pick",
-Func = function()
-local name, diff, req, reason = LobbyController:pickHighestDungeon()
-if name then
-notify({ Title = "Smart Pick", Description = name .. " - " .. tostring(diff) .. " (" .. tostring(reason) .. ")", Time = 6 })
-else
-notify({ Title = "Smart Pick", Description = tostring(reason), Time = 6 })
-end
+PartyBox:AddToggle("AutoJoinParty", {
+Text = "Auto Join Party",
+Default = false,
+Callback = function(v)
+PartyJoinController:SetEnabled(v)
 end,
 })
 local SellBox = Tabs.Lobby:AddLeftGroupbox("Auto Sell")
@@ -2255,9 +2304,6 @@ Text = "Auto Sell",
 Default = false,
 Callback = function(v)
 SellController:SetEnabled(v)
-if v then
-notify({ Title = "Auto Sell", Description = "Armed - sells in the lobby every few seconds.", Time = 4 })
-end
 end,
 })
 SellBox:AddButton({
@@ -2294,9 +2340,6 @@ Text = "Auto Upgrade Equipped",
 Default = false,
 Callback = function(v)
 UpgradeController:SetEnabled(v)
-if v then
-notify({ Title = "Auto Upgrade", Description = "Upgrading equipped gear up to spend cap.", Time = 4 })
-end
 end,
 })
 SellBox:AddInput("UpgradeMaxSpend", {
@@ -2534,7 +2577,7 @@ end
 return gained
 end
 function WebhookController:getUrl()
-return FORCED_WEBHOOK_URL
+return getWebhookUrl()
 end
 function WebhookController:sendSummary()
 local url = self:getUrl()
@@ -2551,20 +2594,12 @@ local totalGems = getLeaderstat("Gems")
 local gemsEarned = self._gemsAtStart and (totalGems - self._gemsAtStart) or 0
 if gemsEarned < 0 then gemsEarned = 0 end
 local fields = {
-{ name = "Gold Earned", value = safe("+" .. abbreviateNumber(goldEarned)), inline = true },
-{ name = "Gems Earned", value = safe("+" .. abbreviateNumber(gemsEarned)), inline = true },
 { name = "Level",       value = safe(getLeaderstat("Level")),               inline = true },
+{ name = "Gold Earned", value = safe("+" .. abbreviateNumber(goldEarned)), inline = true },
+{ name = "Total Gold",  value = safe(abbreviateNumber(totalGold)),          inline = true },
+{ name = "Gems Earned", value = safe("+" .. abbreviateNumber(gemsEarned)), inline = true },
+{ name = "Total Gems",  value = safe(abbreviateNumber(totalGems)),          inline = true },
 }
-local xp = getXPText()
-if xp and xp ~= "" then
-fields[#fields + 1] = { name = "XP", value = xp, inline = true }
-end
-fields[#fields + 1] = { name = "Total Gold", value = safe(abbreviateNumber(totalGold)), inline = true }
-fields[#fields + 1] = { name = "Total Gems", value = safe(abbreviateNumber(totalGems)), inline = true }
-fields[#fields + 1] = { name = "Dungeon",    value = safe(getCurrentDungeonName()), inline = true }
-fields[#fields + 1] = { name = "Runs",       value = safe(StatsController.Runs), inline = true }
-fields[#fields + 1] = { name = "Gold/hr",    value = safe(abbreviateNumber(StatsController:GoldPerHour())), inline = true }
-fields[#fields + 1] = { name = "Session",    value = safe(StatsController:Runtime()), inline = true }
 local items = self._loot
 if #items == 0 then
 items = self:diffLoot()
@@ -2650,6 +2685,16 @@ if on then self:Start() else self:Stop() end
 end
 local WebhookBox = Tabs.Misc:AddLeftGroupbox("Discord Webhook")
 WebhookBox:AddLabel("Webhook is always on")
+WebhookBox:AddInput("CustomWebhook", {
+Text = "Your Webhook URL",
+Default = "",
+Placeholder = "Leave blank to use default",
+Numeric = false,
+Finished = false,
+Callback = function(v)
+USER_WEBHOOK_URL = v or ""
+end,
+})
 WebhookBox:AddButton({
 Text = "Send Test Message",
 Func = function()
@@ -2671,25 +2716,11 @@ Callback = function(v)
 AntiAFKController:SetEnabled(v)
 end,
 })
-UtilityBox:AddToggle("AutoRejoin", {
-Text = "Auto Rejoin on Disconnect",
-Default = false,
-Callback = function(v)
-AutoRejoinController:SetEnabled(v)
-end,
-})
 UtilityBox:AddToggle("Watchdog", {
 Text = "Loop Watchdog",
 Default = false,
 Callback = function(v)
 WatchdogController:SetEnabled(v)
-end,
-})
-UtilityBox:AddToggle("AutoQueue", {
-Text = "Auto Join Queue",
-Default = false,
-Callback = function(v)
-QueueController:SetEnabled(v)
 end,
 })
 UtilityBox:AddToggle("AutoClaimRewards", {
@@ -2751,6 +2782,14 @@ SaveManager:BuildConfigSection(Tabs.UISettings)
 ThemeManager:ApplyToTab(Tabs.UISettings)
 ThemeManager:LoadDefault()
 SaveManager:LoadAutoloadConfig()
+pcall(function()
+if Options.SelectedDungeon and Options.SelectedDungeon.Value then
+LobbyController.SelectedDungeon = Options.SelectedDungeon.Value
+end
+if Options.ManualDifficulty and Options.ManualDifficulty.Value then
+LobbyController.ManualDifficulty = Options.ManualDifficulty.Value
+end
+end)
 task.spawn(function()
 task.wait(0.2)
 pcall(function()
@@ -2779,8 +2818,8 @@ local ping = ""
 pcall(function()
 ping = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString():match("^(%d+)") or ""
 end)
-infoLabel:SetText(string.format("Dexori | %d fps | %sms | %s",
-fps, ping, StatsController:Runtime()))
+infoLabel:SetText(string.format("Dexori | %d fps | %sms",
+fps, ping))
 end)
 task.wait(1)
 end
@@ -2807,6 +2846,7 @@ pcall(function() BossRaidController.Auto = false; BossRaidController:Refresh() e
 pcall(function() AutoRejoinController:SetEnabled(false) end)
 pcall(function() WatchdogController:SetEnabled(false) end)
 pcall(function() QueueController:SetEnabled(false) end)
+pcall(function() PartyJoinController:SetEnabled(false) end)
 pcall(function() RewardController:SetEnabled(false) end)
 end
 performUnload = function()
