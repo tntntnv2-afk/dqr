@@ -268,6 +268,12 @@ local function spotIsClear(pos, margin)
 	for _, part in ipairs(getTelegraphParts()) do
 		if part.Parent and part.Transparency < 0.95 then
 			local s = part.Size
+			local cf = part.CFrame
+			local vHalf = math.abs(cf.UpVector.Y) * s.Y * 0.5
+				+ math.abs(cf.RightVector.Y) * s.X * 0.5
+				+ math.abs(cf.LookVector.Y) * s.Z * 0.5
+			if pos.Y > part.Position.Y + vHalf + 12 then
+			else
 			local longAxis = math.max(s.X, s.Z)
 			local shortAxis = math.min(s.X, s.Z)
 			if longAxis > shortAxis * 3 and longAxis > 20 then
@@ -297,6 +303,7 @@ local function spotIsClear(pos, margin)
 					return false
 				end
 			end
+			end
 		end
 	end
 	return true
@@ -321,6 +328,14 @@ local function findAttackSafeSpot(target, offset, below)
 			local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
 			candidates[#candidates + 1] =
 				mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
+		end
+	end
+	for _, up in ipairs({ 14, 22, 32 }) do
+		candidates[#candidates + 1] = mobPos + Vector3.new(0, yOff + up, 0)
+		for a = 0, 3 do
+			local angle = (a / 4) * math.pi * 2
+			candidates[#candidates + 1] =
+				mobPos + Vector3.new(math.cos(angle) * 8, yOff + up, math.sin(angle) * 8)
 		end
 	end
 
@@ -817,6 +832,7 @@ end
 function KeyController:_shouldFire()
 if StallController._stalling then return false end
 if not self.OnlyInRange then return true end
+if FLOAT_STATE == "DODGE" or FLOAT_STATE == "BAIT" or FLOAT_STATE == "mechanic" then return true end
 local character = LocalPlayer.Character; local hrp = character and character:FindFirstChild("HumanoidRootPart")
 if not hrp then return false end
 return getNearestMobDistance(hrp.Position) <= self:_effectiveRange()
