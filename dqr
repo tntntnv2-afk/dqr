@@ -1,4 +1,4 @@
--- made by ryoichi enjoy fat ass niggas
+-- made by ryoichi
 local STREAMER_ALIAS = "Ryoichi is king"
 task.spawn(function()
 local plrs = game:GetService("Players")
@@ -196,202 +196,141 @@ end
 return best
 end
 local TELEGRAPH_KEYWORDS = {
-"precast", "hitbox", "hit box", "aoe", "telegraph",
-"tentacle", "tentacal", "tenticle", "kraken", "blade",
-"swing", "slam", "slammed", "shockwave", "beam", "laser",
-"rock", "bomb", "spike", "missile", "rocket", "explosion", "explosive",
-"crescent", "smite", "strike", "crisscross", "criss", "wave",
-"flame", "flamewall", "freezing", "frozen", "iceb", "icespike",
-"artillery", "cannon", "seeking", "blast", "spinning", "swirly",
-"skyshot", "orbshot", "orbbeam", "orbprecast", "movingorb", "moveorb",
-"bouncingorb", "passiveorb", "bigrock", "bigspike", "bigcircle",
-"groundaura", "horizontalline", "linkbeam", "lifestealbeam",
-"oneshotbeam", "curring", "curse ring", "overheadcannon", "overheadring",
-"overheadrock", "spearman", "shark", "genericneonball", "spinninglaser", "mageorb",
-"movingbeam", "rotatingcircle", "sharkthrow", "artilleryrock",
+	"precast", "hitbox", "hit box",
+	"tentacle", "tentacal", "tenticle", "kraken", "blade",
+	"swing", "slam", "slammed", "shockwave", "aoe", "beam",
 }
-local TELEGRAPH_IGNORE = {
-"gui", "smoke", "highlight", "spawneffect", "forcefield",
-"lookaway", "safespot", "passivehighlight", "mark",
-"particle", "decal", "vfx", "glow",
-}
-local function nameIgnored(n)
-for _, ig in ipairs(TELEGRAPH_IGNORE) do
-if n:find(ig, 1, true) then return true end
+local function nameIsTelegraph(name)
+	local n = (name or ""):lower()
+	for _, kw in ipairs(TELEGRAPH_KEYWORDS) do
+		if n:find(kw, 1, true) then return true end
+	end
+	return false
 end
-return false
-end
-local function nameHasKeyword(n)
-for _, kw in ipairs(TELEGRAPH_KEYWORDS) do
-if n:find(kw, 1, true) then return true end
-end
-return false
-end
-local function partIsTelegraph(part)
-if not part:IsA("BasePart") then return false end
-local n = part.Name:lower()
-if nameIgnored(n) then return false end
-if nameHasKeyword(n) then return true end
-local mat = part.Material
-if (mat == Enum.Material.Neon or mat == Enum.Material.ForceField) and part.Anchored and not part.CanCollide then
-local s = part.Size
-if s.X >= 2 or s.Z >= 2 then return true end
-end
-return false
-end
+
 local _teleCache, _teleScan = {}, 0
-local _teleSeen = {}
 local function getTelegraphParts()
-if os.clock() - _teleScan > 0.08 then
-_teleScan = os.clock()
-local found = {}
-local dungeon = workspace:FindFirstChild("dungeon")
-if dungeon then
-local now = os.clock()
-local live = {}
-for _, d in ipairs(workspace:GetDescendants()) do
-if partIsTelegraph(d) then
-found[#found + 1] = d
-if d.Transparency < 0.95 then
-if not _teleSeen[d] then _teleSeen[d] = now end
-live[d] = true
+	if os.clock() - _teleScan > 0.05 then
+		_teleScan = os.clock()
+		local found = {}
+
+		local roots = { workspace }
+		for _, root in ipairs(roots) do
+			for _, d in ipairs(root:GetDescendants()) do
+				if d:IsA("BasePart") and nameIsTelegraph(d.Name) then
+					found[#found + 1] = d
+				end
+			end
+		end
+		_teleCache = found
+	end
+	return _teleCache
 end
-end
-end
-for part in pairs(_teleSeen) do
-if not live[part] then _teleSeen[part] = nil end
-end
-end
-_teleCache = found
-end
-return _teleCache
-end
-local function partIsFreshThreat(part)
-local since = _teleSeen[part]
-if not since then return false end
-return (os.clock() - since) <= 3.5
-end
+
 local function isMobAttackingNear(pos, range)
-for _, part in ipairs(getTelegraphParts()) do
-if part.Parent then
-local active = part.Transparency < 0.95
-if active and partIsFreshThreat(part) and (part.Position - pos).Magnitude <= range then return true end
+	for _, part in ipairs(getTelegraphParts()) do
+		if part.Parent then
+
+			local active = part.Transparency < 0.95
+			if active and (part.Position - pos).Magnitude <= range then
+				return true
+			end
+		end
+	end
+	return false
 end
+
+local function nearestTelegraphDist(pos)
+	local best = math.huge
+	for _, part in ipairs(getTelegraphParts()) do
+		if part.Parent and part.Transparency < 0.95 then
+			local d = (part.Position - pos).Magnitude
+			if d < best then best = d end
+		end
+	end
+	return best
 end
-return false
-end
-local function threatCount(pos, range)
-local c = 0
-for _, part in ipairs(getTelegraphParts()) do
-if part.Parent and part.Transparency < 0.95 and partIsFreshThreat(part) and (part.Position - pos).Magnitude <= range then c = c + 1 end
-end
-return c
-end
+
 local function telegraphRadius(part)
-local s = part.Size
-local r
-if part.Shape == Enum.PartType.Ball then
-r = math.max(s.X, s.Y, s.Z) * 0.5
-elseif part.Shape == Enum.PartType.Cylinder then
-r = math.max(s.Y, s.Z) * 0.5
-else
-r = math.max(s.X, s.Z) * 0.5
+	local s = part.Size
+	local r = math.max(s.X, s.Z) * 0.5
+	local n = part.Name:lower()
+	if n:find("tentacle") or n:find("kraken") or n:find("swing")
+	or n:find("slam") or n:find("blade") then
+		r = r + 18
+	end
+	return r
 end
-return r + 5
-end
-local function clearanceAt(pos)
-local flat = Vector2.new(pos.X, pos.Z); local minGap = math.huge
-for _, part in ipairs(getTelegraphParts()) do
-if part.Parent and part.Transparency < 0.95 and partIsFreshThreat(part) then
-local s = part.Size; local longAxis = math.max(s.X, s.Z); local shortAxis = math.min(s.X, s.Z)
-local gap
-if longAxis > shortAxis * 3 and longAxis > 20 then
-local cf = part.CFrame; local dir = cf.LookVector
-if s.X >= s.Z then dir = cf.RightVector end
-local dirFlat = Vector2.new(dir.X, dir.Z)
-if dirFlat.Magnitude < 0.001 then dirFlat = Vector2.new(1, 0) end
-dirFlat = dirFlat.Unit; local center = Vector2.new(part.Position.X, part.Position.Z); local rel = flat - center; local along = rel.X * dirFlat.X + rel.Y * dirFlat.Y; local half = longAxis * 0.5
-if along > half then along = half elseif along < -half then along = -half end
-local closest = center + dirFlat * along; gap = (flat - closest).Magnitude - (shortAxis * 0.5 + 4)
-else
-gap = (flat - Vector2.new(part.Position.X, part.Position.Z)).Magnitude - telegraphRadius(part)
-end
-if gap < minGap then minGap = gap end
-end
-end
-return minGap
-end
+
 local function spotIsClear(pos, margin)
-return clearanceAt(pos) >= (margin or 6)
+	margin = margin or 16
+	local flat = Vector2.new(pos.X, pos.Z)
+	for _, part in ipairs(getTelegraphParts()) do
+		if part.Parent and part.Transparency < 0.95 then
+			local pflat = Vector2.new(part.Position.X, part.Position.Z)
+			if (pflat - flat).Magnitude <= telegraphRadius(part) + margin then
+				return false
+			end
+		end
+	end
+	return true
 end
-local ATTACK_RANGE = 42; local SAFE_CLEARANCE = 18
-local function nearestThreatCenter(pos)
-local best, bestD = nil, math.huge
-for _, part in ipairs(getTelegraphParts()) do
-if part.Parent and part.Transparency < 0.95 and partIsFreshThreat(part) then
-local d = (Vector2.new(part.Position.X, part.Position.Z) - Vector2.new(pos.X, pos.Z)).Magnitude - telegraphRadius(part)
-if d < bestD then bestD = d; best = part.Position end
-end
-end
-return best
-end
-local function findAttackSafeSpot(target, offset, below, margin, fromPos)
-local mobPos = target.Position; local yOff = below and -offset or offset; local minY = mobPos.Y + yOff
-local function atHeight(v)
-return Vector3.new(v.X, minY, v.Z)
-end
-local candidates = { mobPos + Vector3.new(0, yOff, 0) }
-for _, radius in ipairs({ 5, 8, 11, 14, 18, 22, 27, 32, 38, 45 }) do
-for a = 0, 15 do
-local angle = (a / 16) * math.pi * 2
-candidates[#candidates + 1] =
-mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
-end
-end
-if fromPos then
-local center = Vector3.new(fromPos.X, mobPos.Y, fromPos.Z)
-local threat = nearestThreatCenter(fromPos)
-local fleeDir
-if threat then local d = Vector3.new(fromPos.X - threat.X, 0, fromPos.Z - threat.Z); if d.Magnitude > 0.1 then fleeDir = d.Unit end end
-for _, radius in ipairs({ 10, 18, 26, 36, 48, 62, 80, 100 }) do
-for a = 0, 11 do
-local angle = (a / 12) * math.pi * 2
-candidates[#candidates + 1] = center + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
-end
-if fleeDir then candidates[#candidates + 1] = center + fleeDir * radius + Vector3.new(0, yOff, 0) end
-end
-end
-local SAFE_MARGIN = margin or 6
-local best, bestDist = nil, math.huge
-for _, c in ipairs(candidates) do
-local d = (c - mobPos).Magnitude
-if d <= ATTACK_RANGE and clearanceAt(c) >= SAFE_MARGIN then
-if d < bestDist then bestDist = d; best = c end
-end
-end
-if best then return atHeight(best) end
-for _, radius in ipairs({ 52, 62, 75, 90, 110, 135, 165, 200 }) do
-for a = 0, 11 do
-local angle = (a / 12) * math.pi * 2
-candidates[#candidates + 1] =
-mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
-end
-end
-local refPos = fromPos or mobPos
-best, bestDist = nil, math.huge
-for _, c in ipairs(candidates) do
-if clearanceAt(c) >= SAFE_MARGIN then
-local d = (c - refPos).Magnitude
-if d < bestDist then bestDist = d; best = c end
-end
-end
-if best then return atHeight(best) end
-local far, farScore = nil, -1
-for _, c in ipairs(candidates) do
-local clear = clearanceAt(c)
-if clear > farScore then farScore = clear; far = c end
-end
-return atHeight(far or (mobPos + Vector3.new(0, yOff, 0)))
+
+local ATTACK_RANGE = 42
+
+local SAFE_CLEARANCE = 18
+
+local function findAttackSafeSpot(target, offset, below)
+	local mobPos = target.Position
+	local yOff = below and -offset or offset
+
+	local candidates = {
+		mobPos + Vector3.new(0, yOff, 0),
+		mobPos,
+		mobPos + Vector3.new(0, -offset, 0),
+		mobPos + Vector3.new(0, offset, 0),
+	}
+	for _, radius in ipairs({ 6, 10, 15, 20, 26, 32, 40 }) do
+		for a = 0, 7 do
+			local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
+			candidates[#candidates + 1] =
+				mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
+		end
+	end
+
+	for _, clearance in ipairs({ SAFE_CLEARANCE, 13, 9, 6 }) do
+		local best, bestDist = nil, math.huge
+		for _, c in ipairs(candidates) do
+			local d = (c - mobPos).Magnitude
+			if d <= ATTACK_RANGE and spotIsClear(c, clearance) then
+				if d < bestDist then bestDist = d; best = c end
+			end
+		end
+		if best then return best end
+	end
+
+	for _, radius in ipairs({ 55, 70, 90, 115, 145 }) do
+		for a = 0, 7 do
+			local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
+			candidates[#candidates + 1] =
+				mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
+		end
+	end
+	local best, bestDist = nil, math.huge
+	for _, c in ipairs(candidates) do
+		if spotIsClear(c, 14) then
+			local d = (c - mobPos).Magnitude
+			if d < bestDist then bestDist = d; best = c end
+		end
+	end
+	if best then return best end
+
+	local far, farScore = nil, -1
+	for _, c in ipairs(candidates) do
+		local clear = nearestTelegraphDist(c)
+		if clear > farScore then farScore = clear; far = c end
+	end
+	return far or (mobPos + Vector3.new(0, yOff, 0))
 end
 local MechanicsController
 local FloatController = {
@@ -540,13 +479,9 @@ if look.Magnitude < 0.05 then return CFrame.new(pos, pos + Vector3.new(0, -1, 0)
 return CFrame.lookAt(pos, target.Position)
 end
 Decoy:ensure(character); Decoy:moveTo(floatCF)
-local threats = threatCount(hrp.Position, 55)
-local myClear = clearanceAt(hrp.Position)
-local attacking = isMobAttackingNear(goal, self.DodgeRange or 60) or threats > 0 or myClear < 8
+local attacking = isMobAttackingNear(goal, self.DodgeRange or 60)
 if attacking then
-local margin = threats >= 2 and (10 + threats * 2) or 12
-local curClear = self._dodgeTarget and clearanceAt(self._dodgeTarget) or -1
-if not self._dodgeTarget or threats >= 1 or curClear < margin or myClear < 8 then self._dodgeTarget = findAttackSafeSpot(target, self.Height, self.Below, margin, hrp.Position) end
+if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 6) then self._dodgeTarget = findAttackSafeSpot(target, self.Height, self.Below) end
 FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setLocalTransparency(character, 1)
 if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
