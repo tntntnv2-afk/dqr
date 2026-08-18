@@ -257,7 +257,7 @@ local function telegraphRadius(part)
 	local n = part.Name:lower()
 	if n:find("tentacle") or n:find("kraken") or n:find("swing")
 	or n:find("slam") or n:find("blade") then
-		r = r + 18
+		r = r + 8
 	end
 	return r
 end
@@ -267,9 +267,35 @@ local function spotIsClear(pos, margin)
 	local flat = Vector2.new(pos.X, pos.Z)
 	for _, part in ipairs(getTelegraphParts()) do
 		if part.Parent and part.Transparency < 0.95 then
-			local pflat = Vector2.new(part.Position.X, part.Position.Z)
-			if (pflat - flat).Magnitude <= telegraphRadius(part) + margin then
-				return false
+			local s = part.Size
+			local longAxis = math.max(s.X, s.Z)
+			local shortAxis = math.min(s.X, s.Z)
+			if longAxis > shortAxis * 3 and longAxis > 20 then
+				local cf = part.CFrame
+				local dir = (s.X >= s.Z) and cf.RightVector or cf.LookVector
+				local dirFlat = Vector2.new(dir.X, dir.Z)
+				if dirFlat.Magnitude < 0.5 then
+					local pflat = Vector2.new(part.Position.X, part.Position.Z)
+					if (pflat - flat).Magnitude <= shortAxis * 0.5 + margin then
+						return false
+					end
+				else
+					dirFlat = dirFlat.Unit
+					local center = Vector2.new(part.Position.X, part.Position.Z)
+					local rel = flat - center
+					local along = rel.X * dirFlat.X + rel.Y * dirFlat.Y
+					local half = longAxis * 0.5
+					if along > half then along = half elseif along < -half then along = -half end
+					local closest = center + dirFlat * along
+					if (flat - closest).Magnitude <= shortAxis * 0.5 + margin then
+						return false
+					end
+				end
+			else
+				local pflat = Vector2.new(part.Position.X, part.Position.Z)
+				if (pflat - flat).Magnitude <= telegraphRadius(part) + margin then
+					return false
+				end
 			end
 		end
 	end
@@ -298,7 +324,7 @@ local function findAttackSafeSpot(target, offset, below)
 		end
 	end
 
-	for _, clearance in ipairs({ SAFE_CLEARANCE, 13, 9, 6 }) do
+	for _, clearance in ipairs({ 6, 4 }) do
 		local best, bestDist = nil, math.huge
 		for _, c in ipairs(candidates) do
 			local d = (c - mobPos).Magnitude
