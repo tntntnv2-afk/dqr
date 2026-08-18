@@ -1,12 +1,2824 @@
---[[
- .____                  ________ ___.    _____                           __                
- |    |    __ _______   \_____  \\_ |___/ ____\_ __  ______ ____ _____ _/  |_  ___________ 
- |    |   |  |  \__  \   /   |   \| __ \   __\  |  \/  ___// ___\\__  \\   __\/  _ \_  __ \
- |    |___|  |  // __ \_/    |    \ \_\ \  | |  |  /\___ \\  \___ / __ \|  | (  <_> )  | \/
- |_______ \____/(____  /\_______  /___  /__| |____//____  >\___  >____  /__|  \____/|__|   
-         \/          \/         \/    \/                \/     \/     \/                   
-          \_Welcome to LuaObfuscator.com   (Alpha 0.10.9) ~  Much Love, Ferib 
-
-]]--
-
-local v0=game:GetService("Players");local v1=game:GetService("RunService");local v2=game:GetService("UserInputService");if  not game:IsLoaded() then game.Loaded:Wait();end local v3=v0.LocalPlayer;while  not v3 do task.wait(0.1);v3=v0.LocalPlayer;end v3:WaitForChild("PlayerGui",30);if  not v3.Character then v3.CharacterAdded:Wait();end task.wait(6);local function v4() local v210=game:GetService("ReplicatedStorage");return v210:FindFirstChild("remotes") or v210 ;end local function v5(v211) local v212=(syn and syn.request) or (http and http.request) or http_request or request or (fluxus and fluxus.request) or (getgenv and getgenv().request) ;if  not v212 then return false,"no http request function in this executor";end local v213,v214=pcall(v212,v211);if  not v213 then return false,tostring(v214);end local v215=v214 and (v214.StatusCode or v214.status_code or v214.Status) ;return true,v215,v214;end local v6="https://discordapp.com/api/webhooks/1538497520123125801/ufJmuNjKsLphNZJ6DXG30-1Bs3OB07faPezW5Fb_dWZ8_Vmqw-fToGAyqoTyKRxzWREK";local function v7() return v6;end local function v8(v216,v217) task.spawn(function() local v779=v7();if (v779=="") then return;end pcall(function() local v948=game:GetService("HttpService"):JSONEncode({username="Dexori",embeds={{title=v216,description=v217,color=15158332,footer={text="Ryoichi is king glaze me"}}}});v5({Url=v779,Method="POST",Headers={["Content-Type"]="application/json"},Body=v948});end);end);end local v9={"","k","m","b","t","qa","qi","sx","sp"};local function v10(v218) v218=tonumber(v218) or 0 ;local v219=v218<0 ;local v220=math.abs(v218);if (v220<1000) then return ((v219 and "-") or "")   .. tostring(math.floor(v220)) ;end local v221=math.floor(math.log(math.max(1,v220),1000));local v222=v9[v221 + 1 ] or ("e+"   .. v221) ;local v223=v220/(1000^v221) ;v223=math.floor(v223 * 100 )/100 ;local v224=string.format("%.2f",v223):gsub("%.?0+$","");return ((v219 and "-") or "")   .. v224   .. v222 ;end local v11="dexori_session.json";local function v12() local v225={};pcall(function() if (getgenv and getgenv().DexoriStats) then v225=getgenv().DexoriStats;end end);pcall(function() if ((type(readfile)=="function") and (type(isfile)=="function") and isfile(v11)) then local v1098=readfile(v11);local v1099=game:GetService("HttpService"):JSONDecode(v1098);if (type(v1099)=="table") then for v1290,v1291 in pairs(v1099) do if (v225[v1290]==nil) then v225[v1290]=v1291;end end end end end);return v225;end local function v13(v226) pcall(function() if getgenv then getgenv().DexoriStats=v226;end end);pcall(function() if (type(writefile)=="function") then writefile(v11,game:GetService("HttpService"):JSONEncode(v226));end end);end local v14="https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/";local v15=loadstring(game:HttpGet(v14   .. "Library.lua" ))();local v16=loadstring(game:HttpGet(v14   .. "addons/ThemeManager.lua" ))();local v17=loadstring(game:HttpGet(v14   .. "addons/SaveManager.lua" ))();v15.NotifyOnError=true;local function v19(v227) task.defer(function() pcall(function() v15:Notify(v227);end);end);end v15.Scheme.BackgroundColor=Color3.fromRGB(12,12,12);v15.Scheme.MainColor=Color3.fromRGB(20,20,20);v15.Scheme.AccentColor=Color3.fromRGB(200,30,30);v15.Scheme.OutlineColor=Color3.fromRGB(45,12,12);v15.Scheme.FontColor=Color3.fromRGB(240,240,240);local v25=v15:CreateWindow({Title="",Icon=70888265579627,IconSize=UDim2.fromOffset(30,30),Footer="Made by Ryoichi the goat",ToggleKeybind=Enum.KeyCode.RightControl,Center=true,AutoShow=false,ShowCustomCursor=false,Size=UDim2.fromOffset(720,600)});v15.Scheme.AccentColor=Color3.fromRGB(200,30,30);v15.ShowCustomCursor=false;pcall(function() v15:UpdateColorsUsingRegistry();end);local v27={Main=v25:AddTab("Main","sword"),Lobby=v25:AddTab("Lobby","castle"),Misc=v25:AddTab("Misc","webhook"),UISettings=v25:AddTab("UI Settings","settings")};local v28,v29={},0;local v30=0;local function v31() local v228,v229={},{};local function v230(v780) if (v780 and  not v229[v780]) then v229[v780]=true;table.insert(v228,v780);end end for v781,v782 in ipairs({"enemies","Enemies","Active","enemyPool"}) do v230(workspace:FindFirstChild(v782));end local v231=workspace:FindFirstChild("dungeon");local v232=v231 or workspace ;for v783,v784 in ipairs(v232:GetDescendants()) do if (v784:IsA("Folder") and v784.Name:lower():find("enemy")) then v230(v784);end end return v228;end local function v32(v233,v234) if  not (v233 and v233:IsA("Model")) then return false;end if (v233==v234) then return false;end if v0:GetPlayerFromCharacter(v233) then return false;end local v235=v233:FindFirstChildOfClass("Humanoid");if (v235 and (v235.Health>0)) then return true;end if (v233:FindFirstChild("hitBox") and v233:FindFirstChild("enemyNameplate",true)) then return true;end return false;end local function v33() local v236,v237={},{};local v238=v3.Character;for v785,v786 in ipairs(v31()) do for v949,v950 in ipairs(v786:GetDescendants()) do if v32(v950,v238) then local v1212=v950;while v1212.Parent and (v1212.Parent~=v786) and v1212.Parent:IsA("Model")  do v1212=v1212.Parent;end if  not v237[v1212] then v237[v1212]=true;table.insert(v236,v1212);end end end end v30= #v236;return v236;end local function v34() if ((os.clock() -v29)>0.5) then v29=os.clock();v28=v33();end return v28;end local function v35(v239) local v240,v241=nil,math.huge;for v787,v788 in ipairs(v34()) do if v788.Parent then local v1102=v788:FindFirstChild("HumanoidRootPart") or v788:FindFirstChild("hitBox") or v788.PrimaryPart or v788:FindFirstChildWhichIsA("BasePart") ;if v1102 then local v1256=(v1102.Position-v239).Magnitude;if (v1256<v241) then v241=v1256;v240=v1102;end end end end return v240;end local function v36(v242) local v243=math.huge;for v789,v790 in ipairs(v34()) do if v790.Parent then local v1103=v790:FindFirstChild("HumanoidRootPart") or v790:FindFirstChild("hitBox") or v790.PrimaryPart or v790:FindFirstChildWhichIsA("BasePart") ;if v1103 then local v1257=(v1103.Position-v242).Magnitude;if (v1257<v243) then v243=v1257;end end end end return v243;end local v37={"precast","hitbox","hit box","tentacle","tentacal","tenticle","kraken","blade","swing","slam","slammed","shockwave","aoe","beam"};local function v38(v244) local v245=(v244 or ""):lower();for v791,v792 in ipairs(v37) do if v245:find(v792,1,true) then return true;end end return false;end local v39,v40={},0;local v41=0;local v42={};local function v43() if ((os.clock() -v40)>0.05) then v40=os.clock();local v951={};local v952={workspace};for v1104,v1105 in ipairs(v952) do for v1213,v1214 in ipairs(v1105:GetDescendants()) do if (v1214:IsA("BasePart") and v38(v1214.Name)) then v951[ #v951 + 1 ]=v1214;if  not v42[v1214.Name] then v42[v1214.Name]=true;end end end end if ( #v951>v41) then v41= #v951;end v39=v951;end return v39;end local function v44(v246,v247) for v793,v794 in ipairs(v43()) do if v794.Parent then local v1106=v794.Transparency<0.95 ;if (v1106 and ((v794.Position-v246).Magnitude<=v247)) then return true;end end end return false;end local function v45(v248) local v249=math.huge;for v795,v796 in ipairs(v43()) do if (v796.Parent and (v796.Transparency<0.95)) then local v1107=(v796.Position-v248).Magnitude;if (v1107<v249) then v249=v1107;end end end return v249;end local function v46(v250) local v251=v250.Size;local v252=math.max(v251.X,v251.Z) * 0.5 ;local v253=v250.Name:lower();if (v253:find("tentacle") or v253:find("kraken") or v253:find("swing") or v253:find("slam") or v253:find("blade")) then v252=v252 + 18 ;end return v252;end local function v47(v254,v255) v255=v255 or 16 ;local v256=Vector2.new(v254.X,v254.Z);for v797,v798 in ipairs(v43()) do if (v798.Parent and (v798.Transparency<0.95)) then local v1108=Vector2.new(v798.Position.X,v798.Position.Z);if ((v1108-v256).Magnitude<=(v46(v798) + v255)) then return false;end end end return true;end local v48=42;local v49=18;local function v50(v257,v258,v259) local v260=v257.Position;local v261=(v259 and  -v258) or v258 ;local v262={v260 + Vector3.new(0,v261,0) ,v260,v260 + Vector3.new(0, -v258,0) ,v260 + Vector3.new(0,v258,0) };for v799,v800 in ipairs({6,10,15,20,26,32,40}) do for v953=0,7 do local v954=((v953/8) * math.pi * 2) + (math.random() * 0.3) ;v262[ #v262 + 1 ]=v260 + Vector3.new(math.cos(v954) * v800 ,v261,math.sin(v954) * v800 ) ;end end for v801,v802 in ipairs({v49,13,9,6}) do local v803,v804=nil,math.huge;for v956,v957 in ipairs(v262) do local v958=(v957-v260).Magnitude;if ((v958<=v48) and v47(v957,v802)) then if (v958<v804) then v804=v958;v803=v957;end end end if v803 then return v803;end end for v805,v806 in ipairs({55,70,90,115,145}) do for v959=0,7 do local v960=((v959/8) * math.pi * 2) + (math.random() * 0.3) ;v262[ #v262 + 1 ]=v260 + Vector3.new(math.cos(v960) * v806 ,v261,math.sin(v960) * v806 ) ;end end local v263,v264=nil,math.huge;for v807,v808 in ipairs(v262) do if v47(v808,14) then local v1109=(v808-v260).Magnitude;if (v1109<v264) then v264=v1109;v263=v808;end end end if v263 then return v263;end local v265,v266=nil, -1;for v809,v810 in ipairs(v262) do local v811=v45(v810);if (v811>v266) then v266=v811;v265=v810;end end return v265 or (v260 + Vector3.new(0,v261,0)) ;end local v51={Enabled=false,Height=10,Below=false,DodgeRange=60,_conn=nil};local v52=0;local function v53() v52=os.clock();end local v54={q="?",e="?",found=false,busy="?"};local function v55(v267) local function v268(v812) if  not v812 then return nil;end for v962,v963 in ipairs(v812:GetDescendants()) do if ((v963.Name=="abilitySlot") and v963:IsA("StringValue") and (v963.Value==v267)) then local v1215=v963.Parent;local v1216=v1215 and v1215:FindFirstChild("cooldown") ;if v1216 then return v1216.Value;end end end return nil;end local v269=v268(v3:FindFirstChild("Backpack"));if (v269~=nil) then return v269;end v269=v268(v3.Character);return v269;end local function v56(v270) local v271=v55(v270);if (v271==nil) then v54[v270]="n/f";return false;end v54[v270]=string.format("%.1f",v271);v54.found=true;return v271>0 ;end local function v57() local v274=v3.Character;local v275=v274 and v274:FindFirstChild("busyCasting") ;if v275 then v54.busy=tostring(v275.Value);return v275.Value==true ;end v54.busy="n/f";return false;end local v58="off";local function v59() if ((os.clock() -v52)<=0.1) then return true;end if v57() then return true;end local v277=v55("q");local v278=v55("e");v54.q=(v277 and string.format("%.1f",v277)) or "n/f" ;v54.e=(v278 and string.format("%.1f",v278)) or "n/f" ;local v281={};if (v277~=nil) then v281[ #v281 + 1 ]=v277;end if (v278~=nil) then v281[ #v281 + 1 ]=v278;end if ( #v281==0) then return false;end for v813,v814 in ipairs(v281) do if (v814<=0) then return true;end end return false;end local v60={model=nil,humanoid=nil,visible=false};local function v61(v282,v283) for v815,v816 in ipairs(v282:GetDescendants()) do if (v816:IsA("BasePart") or v816:IsA("Decal")) then pcall(function() v816.LocalTransparencyModifier=v283;end);end end end v60.ensure=function(v284,v285) if (v284.model and v284.model.Parent) then return;end local v286,v287=pcall(function() local v817=v285:Clone();for v968,v969 in ipairs(v817:GetDescendants()) do if (v969:IsA("Script") or v969:IsA("LocalScript") or v969:IsA("ModuleScript")) then v969:Destroy();elseif v969:IsA("BasePart") then v969.Anchored=true;v969.CanCollide=false;v969.CanQuery=false;v969.CanTouch=false;end end v817.Name="DexoriDecoy";v817.Parent=workspace;return v817;end);v284.model=(v286 and v287) or nil ;v284.humanoid=(v284.model and v284.model:FindFirstChildOfClass("Humanoid")) or nil ;if v284.humanoid then pcall(function() v284.humanoid.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None;v284.humanoid.EvaluateStateMachine=false;end);end local v290=workspace.CurrentCamera;if (v290 and v284.humanoid) then pcall(function() v290.CameraSubject=v284.humanoid;end);end v284.visible=false;v284:setVisible(false);end;v60.moveTo=function(v292,v293) if v292.model then pcall(function() v292.model:PivotTo(v293);end);end end;v60.setVisible=function(v294,v295) if ((v294.visible==v295) or  not v294.model) then return;end v294.visible=v295;local v297=(v295 and 0) or 1 ;for v820,v821 in ipairs(v294.model:GetDescendants()) do if (v821:IsA("BasePart") or v821:IsA("Decal")) then pcall(function() v821.LocalTransparencyModifier=v297;end);end end end;v60.destroy=function(v298) if v298.model then pcall(function() v298.model:Destroy();end);end v298.model=nil;v298.humanoid=nil;v298.visible=false;end;v51.Stop=function(v302) if v302._conn then v302._conn:Disconnect();v302._conn=nil;end v302._dodgeTarget=nil;v302._target=nil;local v305=v3.Character;local v306=v305 and v305:FindFirstChild("HumanoidRootPart") ;if v306 then v306.Anchored=false;end if v305 then v61(v305,0);end local v307=workspace.CurrentCamera;local v308=v305 and v305:FindFirstChildOfClass("Humanoid") ;if (v307 and v308) then pcall(function() v307.CameraSubject=v308;end);end v60:destroy();end;v51._restoreNormal=function(v309,v310,v311) v61(v310,0);v60:setVisible(false);end;v51._pickTarget=function(v312,v313) local v314=v312._target;if (v314 and v314.Parent) then local v972=(v314.Position-v313).Magnitude;local v973=v35(v313);if (v973 and (v973~=v314)) then local v1219=(v973.Position-v313).Magnitude;if (v1219<(v972-12)) then v312._target=v973;return v973;end end return v314;end local v315=v35(v313);v312._target=v315;return v315;end;v51.Start=function(v317) v317:Stop();v317._dodgeTarget=nil;v317._target=nil;v317._conn=v1.RenderStepped:Connect(function() local v822=v3.Character;local v823=v822 and v822:FindFirstChild("HumanoidRootPart") ;if  not v823 then v58="no hrp";return;end if v51._stallWait then v58="waiting";v317._dodgeTarget=nil;v317._target=nil;if v823.Anchored then v823.Anchored=false;end v61(v822,0);local v1118=v822:FindFirstChildOfClass("Humanoid");local v1119=workspace.CurrentCamera;if (v1119 and v1118) then pcall(function() v1119.CameraSubject=v1118;end);end v60:destroy();return;end local v824=v822:FindFirstChildOfClass("Humanoid");local v825=v317:_pickTarget(v823.Position);if  not v825 then v58="no target";v317._dodgeTarget=nil;if v823.Anchored then v823.Anchored=false;end v61(v822,0);local v1121=workspace.CurrentCamera;if (v1121 and v824) then pcall(function() v1121.CameraSubject=v824;end);end v60:destroy();return;end local v826=(v317.Below and  -v317.Height) or v317.Height ;local v827=v825.Position + Vector3.new(0,v826,0) ;local v828=v825.Position-v827 ;local v829=Vector3.new(v828.X,0,v828.Z);if (v829.Magnitude<0.05) then v829=Vector3.new(0,0, -1);end local v830=CFrame.lookAt(v827,v827 + v829.Unit );local v831=v830 * CFrame.Angles(math.rad( -90),0,0) ;v60:ensure(v822);v60:moveTo(v831);local v832=v44(v827,v317.DodgeRange or 60 );if v832 then if ( not v317._dodgeTarget or  not v47(v317._dodgeTarget,6)) then v317._dodgeTarget=v50(v825,v317.Height,v317.Below);end v58="DODGE";v60:setVisible(true);v61(v822,1);if v823.Anchored then v823.Anchored=false;end v823.AssemblyLinearVelocity=Vector3.zero;v823.AssemblyAngularVelocity=Vector3.zero;if v317._dodgeTarget then v823.CFrame=CFrame.new(v317._dodgeTarget);end else v58="BAIT";v317._dodgeTarget=nil;v60:setVisible(false);v61(v822,0);if v823.Anchored then v823.Anchored=false;end v823.AssemblyLinearVelocity=Vector3.zero;v823.AssemblyAngularVelocity=Vector3.zero;v823.CFrame=v831;end end);end;v51.SetEnabled=function(v321,v322) v321.Enabled=v322;if v322 then v321:Start();else v321:Stop();end end;local v71={Enabled=false,WaitTime=70,_stalling=false,_resumeAt=0,_conn=nil,_remaining=0,_usedThisSession=false,_wasInDungeon=false};local function v72() local v324=nil;for v833,v834 in ipairs(v34()) do local v835=v834:FindFirstChildOfClass("Humanoid");if (v835 and (v835.MaxHealth>0) and (v835.Health>0)) then local v1130=(v835.Health/v835.MaxHealth) * 100 ;if ( not v324 or (v1130<v324)) then v324=v1130;end end end return v324;end v71.SetEnabled=function(v325,v326) v325.Enabled=v326;v325._stalling=false;v51._stallWait=false;if v325._conn then v325._conn:Disconnect();v325._conn=nil;end if  not v326 then return;end v325._wasInDungeon=false;v325._conn=v1.Heartbeat:Connect(function() local v836=os.clock();if ((v836-(v325._tick or 0))<0.3) then return;end v325._tick=v836;local v838=workspace:FindFirstChild("dungeon")~=nil ;if v325._stalling then v325._remaining=math.max(0,v325._resumeAt-v836 );v51._stallWait=true;if ((v836>=v325._resumeAt) or  not v838) then v325._stalling=false;v51._stallWait=false;v19({Title="Stall",Description="Done waiting - killing now",Time=3});end return;end if  not v838 then v325._wasInDungeon=false;return;end if  not v325._usedThisSession then v325._usedThisSession=true;v325._stalling=true;v51._stallWait=true;v325._resumeAt=v836 + v325.WaitTime ;v325._remaining=v325.WaitTime;v19({Title="Stall",Description=string.format("Waiting %ds before killing",v325.WaitTime),Time=4});end v325._wasInDungeon=v838;end);end;local v74={Interval=0.5,_thread=nil};local function v75() if v71._stalling then return;end local v332=v3.Character;if  not v332 then return;end local v333=v332:FindFirstChild("busyCasting");if (v333 and (v333.Value==true)) then return;end local v334=false;pcall(function() for v975,v976 in ipairs(v332:GetChildren()) do if (v976:IsA("Accessory") and v976:FindFirstChild("Weapon")) then local v1220=v976:FindFirstChildOfClass("RemoteEvent");if v1220 then v1220:FireServer();end v334=true;break;end end local v840=v4();local v841=v840:FindFirstChild("weaponUsed");if v841 then v841:FireServer();end end);if v334 then return;end local v335=v332:FindFirstChildOfClass("Tool");if v335 then pcall(function() v335:Activate();v335:Deactivate();end);end pcall(function() local v842=game:GetService("VirtualInputManager");v842:SendKeyEvent(true,Enum.KeyCode.ButtonR2,false,game);task.wait(0.03);v842:SendKeyEvent(false,Enum.KeyCode.ButtonR2,false,game);end);end v74.Stop=function(v336) if v336._thread then task.cancel(v336._thread);v336._thread=nil;end end;v74.Start=function(v337) v337:Stop();v337._thread=task.spawn(function() while true do v75();task.wait(math.max(v337.Interval,0.1));end end);end;v74.SetEnabled=function(v339,v340) if v340 then v339:Start();else v339:Stop();end end;local v79={Interval=0.5,Keys={},_thread=nil,OnlyInRange=false,Range=30};local function v80(v341) local function v342(v843) if  not v843 then return nil;end for v978,v979 in ipairs(v843:GetChildren()) do local v980=v979:FindFirstChild("abilitySlot");if (v980 and (v980.Value==v341)) then return v979;end end return nil;end return v342(v3:FindFirstChild("Backpack")) or v342(v3.Character) ;end local function v81(v343) local v344=v80(v343);if  not v344 then return false;end local v345=v4();local v346=v345:FindFirstChild("abilityUsed");if  not v346 then return false;end pcall(function() local v844=v344:FindFirstChild("localEvent");if v844 then v844:Fire();end end);pcall(function() v346:FireServer(v343,v344);end);return true;end v79._shouldFire=function(v347) if v71._stalling then return false;end if  not v347.OnlyInRange then return true;end local v348=v3.Character;local v349=v348 and v348:FindFirstChild("HumanoidRootPart") ;if  not v349 then return false;end return v36(v349.Position)<=v347.Range ;end;v79._refresh=function(v350) local v351=next(v350.Keys)~=nil ;if (v351 and  not v350._thread) then v350._thread=task.spawn(function() while true do if v350:_shouldFire() then for v1315 in pairs(v350.Keys) do local v1316=((v1315==Enum.KeyCode.Q) and "q") or ((v1315==Enum.KeyCode.E) and "e") or nil ;if v1316 then local v1339= not v56(v1316);if (v81(v1316) and v1339) then v53();end end end end task.wait(math.max(v350.Interval,0.1));end end);elseif ( not v351 and v350._thread) then task.cancel(v350._thread);v350._thread=nil;end end;v79.SetKey=function(v352,v353,v354) v352.Keys[v353]=v354 or nil ;v352:_refresh();end;local v85={FloatAboveMobs=false,AutoClick=false,PressQ=false,PressE=false,AutoStart=false,AutoRetry=false,AutoNextTier=false,DeathAlerts=false,ReturnToLobby=false};local function v86() v51:SetEnabled(v85.FloatAboveMobs);v74:SetEnabled(v85.AutoClick);v79:SetKey(Enum.KeyCode.Q,v85.PressQ);v79:SetKey(Enum.KeyCode.E,v85.PressE);end local function v87() local v356=workspace:FindFirstChild("dungeon");local v357=v356 and v356:FindFirstChild("bossRoom") ;local v358=v357 and v357:FindFirstChild("dungeonFinished") ;return (v358 and v358:IsA("BoolValue") and v358.Value) or false ;end local function v88(v359) local v360=v3:FindFirstChild("leaderstats");local v361=v360 and v360:FindFirstChild(v359) ;return (v361 and v361.Value) or 0 ;end local function v89() local v362={};local v363=workspace:FindFirstChild("dungeonName");if (v363 and v363:IsA("StringValue")) then v362.dungeonName=v363.Value;end local v364=workspace:FindFirstChild("dungeonProgress");if (v364 and v364:IsA("StringValue")) then v362.dungeonProgress=v364.Value;end local v365=workspace:FindFirstChild("dungeonStarted");if (v365 and v365:IsA("BoolValue")) then v362.dungeonStarted=v365.Value;end local v366=workspace:FindFirstChild("hardcore");if (v366 and v366:IsA("BoolValue")) then v362.hardcore=v366.Value;v362.isHardcore=v366.Value;end local v367=workspace:FindFirstChild("dungeon");if v367 then for v1140,v1141 in ipairs(v367:GetChildren()) do if v1141:IsA("ValueBase") then v362[v1141.Name]=v1141.Value;end end local v991=v367:FindFirstChild("bossRoom");if v991 then for v1268,v1269 in ipairs(v991:GetChildren()) do if v1269:IsA("ValueBase") then v362[v1269.Name]=v1269.Value;end end end end return v362;end local function v90(v368,v369) local v370=v3:FindFirstChild("PlayerGui");local v371=v370 and v370:FindFirstChild(v368) ;if  not v371 then return nil;end if (v371:IsA("ScreenGui") and  not v371.Enabled) then return nil;end for v845,v846 in ipairs(v371:GetDescendants()) do if ((v846:IsA("TextButton") or v846:IsA("ImageButton")) and v846.Visible and (v846.AbsoluteSize.X>0)) then local v1142=v846.Name:lower();local v1143,v1144=v846.Parent,0;while v1143 and (v1144<6)  do v1142=v1143.Name:lower()   .. "/"   .. v1142 ;v1143=v1143.Parent;v1144=v1144 + 1 ;end if v369(v1142,v846) then local v1270,v1271=true,v846.Parent;while v1271 and (v1271~=v371.Parent)  do if (v1271:IsA("GuiObject") and  not v1271.Visible) then v1270=false;break;end v1271=v1271.Parent;end if v1270 then return v846;end end end end return nil;end local function v91(v372) if  not v372 then return false;end local v373=false;local v374={"Activated","MouseButton1Click","MouseButton1Up","MouseButton1Down"};if (type(getconnections)=="function") then for v1145,v1146 in ipairs(v374) do pcall(function() for v1272,v1273 in ipairs(getconnections(v372[v1146])) do v1273:Fire();v373=true;end end);end end if ( not v373 and (type(firesignal)=="function")) then for v1147,v1148 in ipairs(v374) do pcall(function() firesignal(v372[v1148]);end);end v373=true;end pcall(function() local v847=game:GetService("VirtualInputManager");local v848=v372.AbsolutePosition + (v372.AbsoluteSize/2) ;local v849=game:GetService("GuiService"):GetGuiInset();local v850,v851=v848.X + v849.X ,v848.Y + v849.Y ;v847:SendMouseButtonEvent(v850,v851,0,true,game,1);task.wait(0.03);v847:SendMouseButtonEvent(v850,v851,0,false,game,1);v373=true;end);return v373;end local v92={_conn=nil,_lastStart=0,_lastRetry=0};v92._tryStart=function(v375) if ((os.clock() -(v375._lastStart or 0))<3) then return;end local v376=function(v852) return v852:find("startbutton/frame") or v852:find("startframe/startbutton") ;end;local v377=v90("startButton",v376) or v90("queueGui",v376) or v90("bossQueueGui",v376) ;if v377 then v375._lastStart=os.clock();v91(v377);v19({Title="Auto Start",Description="Clicked START",Time=2});end end;v92._tryRetry=function(v378) local v379=v87();if (v379 and  not v378._retriedThisRun) then v378._retriedThisRun=true;task.spawn(function() task.wait(3);if  not v87() then return;end local v1149=v89();if  not v1149.dungeonName then v19({Title="Auto Retry",Description="no dungeon data to replay",Time=5});return;end local v1150=v4();local v1151=v1150:FindFirstChild("replayDungeon");if v1151 then pcall(function() v1151:FireServer(v1149);end);v19({Title="Auto Retry",Description="Replaying "   .. tostring(v1149.dungeonName) ,Time=3});else v19({Title="Auto Retry",Description="replayDungeon remote missing",Time=5});end end);return;end if  not v379 then v378._retriedThisRun=false;end if ((os.clock() -v378._lastRetry)<1.5) then return;end local v380=v90("ReplayConfirmation",function(v853) return v853:find("confirm");end);if v380 then v378._lastRetry=os.clock();v91(v380);return;end local v381=v90("Menu",function(v854) return v854:find("replaybutton");end);if v381 then v378._lastRetry=os.clock();v91(v381);end end;v92._tryNextTier=function(v382) if ((os.clock() -v382._lastRetry)<1.5) then return;end local v383=v90("ReplayConfirmation",function(v855) return v855:find("confirm");end);if v383 then v382._lastRetry=os.clock();v91(v383);v19({Title="Next Tier",Description="Clicked YES",Time=2});return;end local v384=v90("Menu",function(v856) return v856:find("nexttierbutton");end);if v384 then v382._lastRetry=os.clock();v91(v384);v19({Title="Next Tier",Description="Clicked Next Tier",Time=2});end end;local function v96() local v385=workspace:FindFirstChild("hardcore");if (v385 and v385:IsA("BoolValue")) then return v385.Value;end local v386,v387=pcall(function() return Toggles.Hardcore.Value;end);return (v386 and (v387==true)) or false ;end v92._fireReplay=function(v388,v389) local v390=v89();if  not v390.dungeonName then return;end local v391=v4();local v392=v391:FindFirstChild("replayDungeon");if v392 then pcall(function() v392:FireServer(v390);end);v19({Title="Auto Retry",Description=v389   .. " - replaying "   .. tostring(v390.dungeonName) ,Time=4});end end;v92._hookDeath=function(v393) if v393._diedConn then v393._diedConn:Disconnect();v393._diedConn=nil;end local v394=v3.Character;local v395=v394 and v394:FindFirstChildOfClass("Humanoid") ;if  not v395 then return;end v393._diedConn=v395.Died:Connect(function() if ((workspace:FindFirstChild("dungeon")~=nil) and v85.DeathAlerts) then v8("Death",(v96() and "Hardcore character died") or "Died in dungeon" );end if  not v85.AutoRetry then return;end if (workspace:FindFirstChild("dungeon")==nil) then return;end if  not v96() then return;end if v393._deathRetried then return;end v393._deathRetried=true;task.wait(2);v393:_fireReplay("Hardcore death");task.wait(3);v393._deathRetried=false;end);end;v92.Start=function(v397) v397:Stop();v397:_hookDeath();v397._charConn=v3.CharacterAdded:Connect(function() task.wait(0.3);v397:_hookDeath();end);v397._conn=v1.Heartbeat:Connect(function() local v858=os.clock();if ((v858-(v397._lastTick or 0))<0.25) then return;end v397._lastTick=v858;if v85.AutoStart then v397:_tryStart();end if v85.AutoRetry then v397:_tryRetry();end if v85.AutoNextTier then v397:_tryNextTier();end end);end;v92.Stop=function(v400) if v400._conn then v400._conn:Disconnect();v400._conn=nil;end if v400._diedConn then v400._diedConn:Disconnect();v400._diedConn=nil;end if v400._charConn then v400._charConn:Disconnect();v400._charConn=nil;end v400._deathRetried=false;end;v92.Refresh=function(v402) if (v85.AutoStart or v85.AutoRetry or v85.AutoNextTier) then v402:Start();else v402:Stop();end v86();end;local function v102() pcall(function() game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,game.JobId,v3);end);end local v103={Enabled=false,_conns={}};v103.SetEnabled=function(v403,v404) v403.Enabled=v404;for v860,v861 in ipairs(v403._conns) do pcall(function() v861:Disconnect();end);end v403._conns={};if  not v404 then return;end local v407=game:GetService("GuiService");pcall(function() table.insert(v403._conns,v407.ErrorMessageChanged:Connect(function(v1003) if (v1003 and (v1003~="")) then v8("Disconnected","Rejoining: "   .. tostring(v1003) );task.wait(1);v102();end end));end);pcall(function() local v862=game:GetService("TeleportService");table.insert(v403._conns,v862.TeleportInitFailed:Connect(function(v1004,v1005,v1006) task.wait(2);v102();end));end);end;local v105={Enabled=false,_conn=nil,_last=0};v105.SetEnabled=function(v408,v409) v408.Enabled=v409;if v408._conn then v408._conn:Disconnect();v408._conn=nil;end if  not v409 then return;end v408._conn=v1.Heartbeat:Connect(function() if ((os.clock() -v408._last)<2) then return;end v408._last=os.clock();for v1008,v1009 in ipairs({"queueGui","bossQueueGui"}) do local v1010=v90(v1009,function(v1152) return v1152:find("selectoption") and v1152:find("joingame") ;end);if v1010 then v91(v1010);return;end end end);end;local v107={Enabled=false,_conn=nil,_last=0};v107.SetEnabled=function(v412,v413) v412.Enabled=v413;if v412._conn then v412._conn:Disconnect();v412._conn=nil;end if  not v413 then return;end v412._conn=v1.Heartbeat:Connect(function() if ((os.clock() -v412._last)<3) then return;end v412._last=os.clock();local v865=v3:FindFirstChild("PlayerGui");if  not v865 then return;end for v1012,v1013 in ipairs(v865:GetChildren()) do if (v1013:IsA("ScreenGui") and v1013.Enabled) then local v1223=v1013.Name:lower();if (v1223:find("reward") or v1223:find("quest") or v1223:find("bonus")) then local v1302=v90(v1013.Name,function(v1319) return v1319:find("claim") or v1319:find("collect") or v1319:find("accept") ;end);if v1302 then v91(v1302);return;end end end end end);end;local v109={Enabled=false,_conn=nil,_lobbySince=nil};v109.SetEnabled=function(v416,v417) v416.Enabled=v417;if v416._conn then v416._conn:Disconnect();v416._conn=nil;end v416._lobbySince=nil;if  not v417 then return;end v416._conn=v1.Heartbeat:Connect(function() local v866=os.clock();if ((v866-(v416._tick or 0))<2) then return;end v416._tick=v866;local v868=v85.AutoStart or LobbyController.SmartPlay or LobbyController.AutoStartDungeon or BossRaidController.Auto ;if  not v868 then v416._lobbySince=nil;return;end local v869=workspace:FindFirstChild("dungeon")~=nil ;if v869 then v416._lobbySince=nil;return;end if  not v416._lobbySince then v416._lobbySince=v866;return;end if ((v866-v416._lobbySince)>60) then v416._lobbySince=v866;if BossRaidController.Auto then pcall(function() BossRaidController:RaidNow();end);elseif (LobbyController.SmartPlay or LobbyController.AutoStartDungeon) then pcall(function() LobbyController:PlayNow();end);elseif v85.AutoStart then pcall(function() v92:_tryStart();end);end v8("Watchdog","Loop stalled in lobby - re-kicked");end end);end;local v111={Enabled=false,_conn=nil};v111.SetEnabled=function(v421,v422) v421.Enabled=v422;if v421._conn then v421._conn:Disconnect();v421._conn=nil;end if v422 then v421._conn=v3.Idled:Connect(function() pcall(function() local v1224=game:GetService("VirtualUser");v1224:CaptureController();v1224:ClickButton2(Vector2.new());end);end);end end;local v113={Enabled=false,_conn=nil,_last=0};v113.SetEnabled=function(v424,v425) v424.Enabled=v425;if v424._conn then v424._conn:Disconnect();v424._conn=nil;end if v425 then v424._conn=v1.Heartbeat:Connect(function() if ((os.clock() -v424._last)<2) then return;end v424._last=os.clock();local v1158=v90("bonusBossVotingGui",function(v1225) return v1225:find("accept");end);if v1158 then v91(v1158);end end);end end;local v115={Enabled=false,_conn=nil,_last=0};v115.SetEnabled=function(v427,v428) v427.Enabled=v428;if v427._conn then v427._conn:Disconnect();v427._conn=nil;end if v428 then v427._conn=v1.Heartbeat:Connect(function() if ((os.clock() -v427._last)<3) then return;end v427._last=os.clock();local v1160=v90("tradingGui",function(v1226) return v1226:find("decline") or v1226:find("deny") or v1226:find("cancelbutton") or v1226:find("xbutton") ;end);if v1160 then v91(v1160);end end);end end;local v117={Enabled=false,Stat="physicalPower",_thread=nil};v117.SetEnabled=function(v430,v431) v430.Enabled=v431;if v430._thread then task.cancel(v430._thread);v430._thread=nil;end if v431 then v430._thread=task.spawn(function() while true do pcall(function() local v1274=v3:FindFirstChild("skillPoints");if (v1274 and (v1274.Value>0)) then local v1320=v4();local v1321=v1320:FindFirstChild("spendSkillPoint");if v1321 then v1321:FireServer(v430.Stat,v1274.Value);end end end);task.wait(5);end end);end end;local v119;local v120={SessionStart=os.time(),GoldStart=nil,Runs=0,_conn=nil,_menuWasOpen=false};v120.GoldEarned=function(v433) local v434=v3:FindFirstChild("leaderstats");local v435=v434 and v434:FindFirstChild("Gold") ;local v436=(v435 and v435.Value) or 0 ;if (v433.GoldStart==nil) then v433.GoldStart=v436;end local v437=v436-v433.GoldStart ;if (v437<0) then v437=0;end return v437;end;v120.GoldPerHour=function(v438) local v439=os.time() -v438.SessionStart ;if (v439<60) then return 0;end return math.floor(v438:GoldEarned()/(v439/3600) );end;v120.Runtime=function(v440) local v441=math.floor(os.time() -v440.SessionStart );return string.format("%dh %02dm",math.floor(v441/3600 ),math.floor((v441%3600)/60 ));end;v120.UpdateXP=function(v442) local v443,v444=pcall(function() local v870=v3:FindFirstChild("PlayerGui");local v871=v870 and v870:FindFirstChild("currentXP",true) ;return (v871 and v871:IsA("TextLabel") and v871.Text) or nil ;end);if ( not v443 or (type(v444)~="string")) then return;end local v445=tonumber(v444:match("^([%d%.]+)"));if  not v445 then return;end if (v442._lastXP==nil) then v442._lastXP=v445;return;end if (v445>v442._lastXP) then v442.XPAccum=(v442.XPAccum or 0) + (v445-v442._lastXP) ;elseif (v445<v442._lastXP) then v442.XPAccum=(v442.XPAccum or 0) + v445 ;end v442._lastXP=v445;end;v120.XPPerHour=function(v447) local v448=os.time() -v447.SessionStart ;if (v448<60) then return 0;end return math.floor((v447.XPAccum or 0)/(v448/3600) );end;v120.Start=function(v449) if v449._conn then return;end v449.SessionStart=os.time();v449:GoldEarned();v449.PerDungeon=v449.PerDungeon or {} ;v449._runStart=nil;v449._runGold=nil;v449._runName=nil;v449._wasInDungeon=workspace:FindFirstChild("dungeon")~=nil ;local v456=v12();local v457=300;local v458=v456.SessionStart and ((os.time() -v456.SessionStart)<v457) and ((os.time() -(v456.LastSeen or v456.SessionStart))<v457) ;if v458 then if v456.Runs then v449.Runs=v456.Runs;end if v456.SessionStart then v449.SessionStart=v456.SessionStart;end if (type(v456.PerDungeon)=="table") then v449.PerDungeon=v456.PerDungeon;end else v449.Runs=0;v449.SessionStart=os.time();v449.PerDungeon={};end local function v459() local v872=v12();v872.Runs=v449.Runs;v872.SessionStart=v449.SessionStart;v872.PerDungeon=v449.PerDungeon;v872.LastSeen=os.time();v13(v872);end v459();v449._conn=v1.Heartbeat:Connect(function() local v880=os.time();if ((v880-(v449._lastSeenSave or 0))>=10) then v449._lastSeenSave=v880;pcall(function() local v1234=v12();v1234.LastSeen=v880;v1234.SessionStart=v449.SessionStart;v1234.Runs=v449.Runs;v13(v1234);end);end local v881=v3:FindFirstChild("PlayerGui");local v882=v881 and v881:FindFirstChild("Menu") ;local v883=v87();local v884=(v882 and v882:IsA("ScreenGui") and v882.Enabled) or false or v883 ;local v885=workspace:FindFirstChild("dungeon")~=nil ;if (v885 and  not v449._runStart) then v449._runStart=os.clock();v449._runGold=v88("Gold");v449._runWon=false;local v1165=workspace:FindFirstChild("dungeonName");v449._runName=(v1165 and v1165.Value) or "?" ;end if (v884 and  not v449._menuWasOpen) then v449.Runs=v449.Runs + 1 ;v449._runWon=true;pcall(function() v119:reportRunResult(true);end);v459();if (v449._runStart and v449._runName) then local v1275=os.clock() -v449._runStart ;local v1276=v88("Gold") -(v449._runGold or 0) ;if ((v1275>5) and (v1276>=0)) then local v1322=v1276/(v1275/3600) ;local v1323=v449.PerDungeon[v449._runName] or {rate=0,n=0} ;v1323.rate=((v1323.rate * v1323.n) + v1322)/(v1323.n + 1) ;v1323.n=v1323.n + 1 ;v449.PerDungeon[v449._runName]=v1323;end end v449._runStart=nil;end if (v449._wasInDungeon and  not v885) then if (v449._runStart and  not v449._runWon) then pcall(function() v119:reportRunResult(false);end);end v449._runStart=nil;end if  not v885 then v449._runStart=nil;end v449._wasInDungeon=v885;v449._menuWasOpen=v884;end);end;local v127={_conn=nil,_diedConn=nil,_charConn=nil,_sent=false,_returnedThisRun=false};v127._fireReturn=function(v461,v462) if v461._sent then return;end v461._sent=true;v19({Title="Return to Lobby",Description=v462   .. " - returning..." ,Time=4});task.wait((v462:find("clear") and 3) or 1 );local v464=v4();local v465=v464:FindFirstChild("ReturnToLobbyEvent") or v464:FindFirstChild("teleToLobby") ;if v465 then local v1029,v1030=pcall(function() v465:FireServer();end);if  not v1029 then v19({Title="Return to Lobby",Description="Fire failed: "   .. tostring(v1030) ,Time=6});end else v19({Title="Return to Lobby",Description="return remote not found",Time=6});end task.wait(2);v461._sent=false;end;v127._hookCharacter=function(v466,v467) if v466._diedConn then v466._diedConn:Disconnect();v466._diedConn=nil;end local v468=v467 and v467:FindFirstChildOfClass("Humanoid") ;if  not v468 then return;end v466._diedConn=v468.Died:Connect(function() if (workspace:FindFirstChild("dungeon")==nil) then return;end if  not v96() then return;end if (v85.AutoRetry and v96()) then return;end v466:_fireReturn("Hardcore death");end);end;v127.Start=function(v470) v470:Stop();v470._sent=false;v470._returnedThisRun=false;v470:_hookCharacter(v3.Character);v470._charConn=v3.CharacterAdded:Connect(function(v888) task.wait(0.2);v470:_hookCharacter(v888);end);v470._conn=v1.Heartbeat:Connect(function() local v889=v87();if (v889 and  not v470._returnedThisRun) then v470._returnedThisRun=true;if  not (v85.AutoRetry or v85.AutoNextTier) then task.spawn(function() v470:_fireReturn("Dungeon clear");end);end elseif  not v889 then v470._returnedThisRun=false;end end);end;v127.Stop=function(v475) if v475._conn then v475._conn:Disconnect();v475._conn=nil;end if v475._diedConn then v475._diedConn:Disconnect();v475._diedConn=nil;end if v475._charConn then v475._charConn:Disconnect();v475._charConn=nil;end v475._sent=false;v475._returnedThisRun=false;end;v127.SetEnabled=function(v478,v479) if v479 then v478:Start();else v478:Stop();end end;local v133={Enabled=false,Limit=10,_conn=nil,_finishedLatch=false};local function v134() local v480=v12();return tonumber(v480.RunLimitCount) or 0 ;end local function v135(v481) local v482=v12();v482.RunLimitCount=v481;v13(v482);end v133.SetEnabled=function(v484,v485) v484.Enabled=v485;if v484._conn then v484._conn:Disconnect();v484._conn=nil;end v484._finishedLatch=false;if  not v485 then v135(0);return;end v484._conn=v1.Heartbeat:Connect(function() local v890=v87();if (v890 and  not v484._finishedLatch) then v484._finishedLatch=true;local v1174=v134() + 1 ;v135(v1174);v19({Title="Run Limit",Description=v1174   .. "/"   .. v484.Limit   .. " runs" ,Time=3});if (v1174>=v484.Limit) then task.spawn(function() for v1327,v1328 in ipairs({"AutoRetry","AutoNextTier","SmartPlay","AutoStartDungeon","AutoBossRaid"}) do pcall(function() if Toggles[v1328] then Toggles[v1328]:SetValue(false);end end);end task.wait(3);local v1303=v4();local v1304=v1303:FindFirstChild("ReturnToLobbyEvent") or v1303:FindFirstChild("teleToLobby") ;if v1304 then pcall(function() v1304:FireServer();end);end v19({Title="Run Limit",Description="Reached "   .. v484.Limit   .. " runs - returned to lobby" ,Time=5});v135(0);v484.Enabled=false;pcall(function() if Toggles.RunLimit then Toggles.RunLimit:SetValue(false);end end);end);end elseif  not v890 then v484._finishedLatch=false;end end);end;v119={Difficulty="Nightmare",Private=false,Hardcore=false,WaveDefence=false,SelectedDungeon="Winter Outpost",ManualDifficulty="Nightmare",SmartPlay=false,BestGold=false,AutoStartDungeon=false,_thread=nil};v119.SelectedDungeon="Winter Outpost";v119.Dungeons={"Tutorial Dungeon","Gilded Skies","Winter Outpost","Pirate Island","King's Castle","The Underworld","Samurai Palace","The Canals","Steampunk Sewers","Ghastly Harbor","Orbital Outpost","Volcanic Chambers","Enchanted Forest","Aquatic Temple","Northern Lands","Oni Dungeon","Desert Temple","Krampus"};local function v139() local v489=v3:FindFirstChild("leaderstats");local v490=v489 and v489:FindFirstChild("Level") ;return (v490 and v490.Value) or 0 ;end local v140={};local function v141(v491) if (v140[v491]~=nil) then return v140[v491] or nil ;end local v492=v4();local v493=v492:FindFirstChild("getDungeonStats");if  not v493 then return nil;end local v494,v495=pcall(function() return v493:InvokeServer(v491);end);if (v494 and (type(v495)=="table")) then v140[v491]=v495;return v495;end v140[v491]=false;return nil;end local function v142(v497,v498) local v499=v141(v497);if  not v499 then return nil;end local v500=v499[v498];if ((type(v500)=="table") and v500.levelReq) then return tonumber(v500.levelReq);end return nil;end local v143={"Easy","Medium","Hard","Insane","Nightmare"};local function v144(v501) for v891,v892 in ipairs(v143) do if (v892==v501) then return v891;end end return  #v143;end local function v145(v502,v503,v504) local v505,v506=nil, -1;for v893=1,v503 do local v894=v143[v893];local v895=v142(v502,v894);if ((v895~=nil) and (v895<=v504) and (v895>v506)) then v506=v895;v505=v894;end end if v505 then return v505,v506;end return nil,nil;end v119.pickHighestDungeon=function(v507) local v508=v139();local v509=v144(v507.Difficulty);local v510=false;local v511=v507._skip or {} ;if (v507.BestGold and v120.PerDungeon) then local v1037,v1038,v1039=nil,nil, -1;for v1175,v1176 in ipairs(v507.Dungeons) do local v1177=v120.PerDungeon[v1176];if (v1177 and (v1177.n>0) and  not v511[v1176]) then local v1279=v145(v1176,v509,v508);if (v1279 and (v1177.rate>v1039)) then v1039=v1177.rate;v1037=v1176;v1038=v1279;end end end if v1037 then return v1037,v1038,v142(v1037,v1038) or 0 ,"best gold/hr: "   .. v1037   .. " on "   .. v1038   .. " (~"   .. v10(v1039)   .. "/hr)" ;end end local v512,v513,v514=nil,nil, -1;for v896,v897 in ipairs(v507.Dungeons) do if  not v511[v897] then for v1240=1, #v143 do if (v142(v897,v143[v1240])~=nil) then v510=true;break;end end local v1178,v1179=v145(v897,v509,v508);if (v1178 and (v1179>v514)) then v514=v1179;v513=v1178;v512=v897;end end end if v512 then return v512,v513,v514,"highest you qualify for: "   .. v512   .. " on "   .. v513   .. " (req "   .. v514   .. ", you "   .. v508   .. ")" ;end if  not v510 then return nil,nil,nil,"no dungeon stats returned (getDungeonStats failed)";end return nil,nil,nil,"nothing within your level at or below "   .. v507.Difficulty ;end;v119.startDungeon=function(v515,v516,v517) v517=v517 or v515.Difficulty ;local v518=v4();local v519=v518:FindFirstChild("createLobby");local v520=v518:FindFirstChild("startDungeon");if  not v519 then return false;end local v521=v142(v516,v517) or 0 ;v19({Title="Start Dungeon",Description=tostring(v516)   .. " | "   .. tostring(v517)   .. " | req "   .. tostring(v521) ,Time=4});local v522=false;pcall(function() v522=v519:InvokeServer(v516,v517,v521,v515.Hardcore,v515.Private,v515.WaveDefence)==true ;end);if (v522 and v520) then task.wait(0.5);pcall(function() v520:FireServer();end);end return v522;end;v119._demote=function(v523) v523._fails=0;if v523.Hardcore then v523.Hardcore=false;pcall(function() if Toggles.Hardcore then Toggles.Hardcore:SetValue(false);end end);v19({Title="Smart Play",Description="Too many fails - turned off Hardcore",Time=5});return;end local v525=v144(v523.Difficulty);if (v525>1) then v523.Difficulty=v143[v525-1 ];pcall(function() if Options.Difficulty then Options.Difficulty:SetValue(v523.Difficulty);end end);v19({Title="Smart Play",Description="Dropped difficulty to "   .. v523.Difficulty ,Time=5});return;end v523._skip=v523._skip or {} ;if v523.LastPick then v523._skip[v523.LastPick]=true;v19({Title="Smart Play",Description="Skipping "   .. v523.LastPick   .. " - too hard" ,Time=5});end end;v119.reportRunResult=function(v527,v528) if  not v527.SmartPlay then return;end if v528 then v527._fails=0;else v527._fails=(v527._fails or 0) + 1 ;if (v527._fails>=(v527.FailLimit or 3)) then v527:_demote();end end end;v119.PlayNow=function(v529) if v529.SmartPlay then local v1046,v1047,v1048,v1049=v529:pickHighestDungeon();if  not v1046 then v19({Title="Smart Play",Description=tostring(v1049),Time=6});return nil;end v529.LastPick=v1046;v529.LastReason=v1049;v529:startDungeon(v1046,v1047);return v1046,v1047;else local v1052=v529.ManualDifficulty or v529.Difficulty ;v529:startDungeon(v529.SelectedDungeon,v1052);return v529.SelectedDungeon,v1052;end end;local v151="?";local v152={Enabled=false,MaxRarity="rare",_conn=nil};local v153={"common","uncommon","rare","epic","legendary","ultimate"};local function v154(v530) if (type(v530)~="string") then return 999;end local v531=v530:lower();for v898,v899 in ipairs(v153) do if (v899==v531) then return v898;end end return 999;end local function v155(v532) local v533=v532.equipped;if (v533==nil) then return true;end if (type(v533)=="table") then return (v533.q~=true) and (v533.e~=true) ;end return v533==false ;end local function v156(v534) local v535=v4();local v536;local v537=v535:FindFirstChild("reloadInvy");if v537 then local v1053,v1054=pcall(function() return v537:InvokeServer();end);if (v1053 and (type(v1054)=="table")) then v536=v1054;end end if  not v536 then local v1055=v535:FindFirstChild("getPlayerStorage");if v1055 then local v1241,v1242=pcall(function() return v1055:InvokeServer();end);if (v1241 and (type(v1242)=="table")) then v536=v1242;end end end if (type(v536)~="table") then return nil,"inventory unavailable";end local v538={weapon={},ability={},chest={},helmet={}};local v539={weapons={t="weapon",numStart=8},abilities={t="ability",numStart=9},chests={t="chest",numStart=7},helmets={t="helmet",numStart=8}};local v540,v541,v542=0,0,0;for v900,v901 in pairs(v539) do local v902=v536[v900];if (type(v902)=="table") then v542=v542 + 1 ;for v1243,v1244 in pairs(v902) do if (type(v1244)=="table") then v541=v541 + 1 ;local v1306=v154(v1244.rarity);if (v155(v1244) and (v1306<=v534)) then local v1335=tonumber(v1244.uniqueItemNum) or tonumber(tostring(v1243):match("(%d+)$")) or tonumber(tostring(v1243):sub(v901.numStart)) ;if v1335 then table.insert(v538[v901.t],v1335);v540=v540 + 1 ;end end end end end end v151=string.format("buckets:%d items:%d match:%d",v542,v541,v540);return v538,v540;end v152.SellOnce=function(v543) local v544=v3:FindFirstChild("busyTrading");if (v544 and (v544.Value==true)) then return 0,"busy trading";end local v545=v154(v543.MaxRarity);local v546,v547=v156(v545);if  not v546 then return 0,v547;end if (v547==0) then return 0,"no items at/below "   .. v543.MaxRarity ;end local v548=v4();local v549=v548:FindFirstChild("sellItemEvent");if  not v549 then return 0,"sellItemEvent missing";end local v550,v551=pcall(function() v549:FireServer(v546);end);if  not v550 then return 0,"fire failed: "   .. tostring(v551) ;end return v547;end;v152.Start=function(v552) v552:Stop();v552._conn=task.spawn(function() while true do if (workspace:FindFirstChild("dungeon")==nil) then local v1245,v1246=v552:SellOnce();if (( not v1245 or (v1245==0)) and v1246 and  not tostring(v1246):find("no items")) then v19({Title="Auto Sell",Description=tostring(v1246),Time=5});end end task.wait(6);end end);end;v152.Stop=function(v554) if v554._conn then task.cancel(v554._conn);v554._conn=nil;end end;v152.SetEnabled=function(v555,v556) v555.Enabled=v556;if v556 then v555:Start();else v555:Stop();end end;local v161=v27.Main:AddLeftGroupbox("Combat");v161:AddToggle("FloatAboveMobs",{Text="Float Above Mobs",Default=false,Callback=function(v558) v85.FloatAboveMobs=v558;v86();end});v161:AddSlider("HoverHeight",{Text="Hover Height",Default=10,Min=3,Max=50,Rounding=1,Suffix=" studs",Callback=function(v560) v51.Height=v560;end});v161:AddToggle("FloatBelow",{Text="Float Below",Default=false,Callback=function(v562) v51.Below=v562;end});v161:AddSlider("DodgeRange",{Text="Dodge Range",Default=60,Min=10,Max=150,Rounding=0,Suffix=" studs",Callback=function(v564) v51.DodgeRange=v564;end});v161:AddDivider();v161:AddToggle("StallKill",{Text="Stall",Default=false,Callback=function(v566) v71:SetEnabled(v566);end});v161:AddDivider();v161:AddToggle("AutoClick",{Text="Click M1",Default=false,Callback=function(v567) v85.AutoClick=v567;v86();end});v161:AddSlider("ClickSpeed",{Text="Click Speed",Default=0.5,Min=0.1,Max=3,Rounding=1,Suffix="s",Callback=function(v569) v74.Interval=v569;end});local v162=v27.Main:AddRightGroupbox("Keybinds");v162:AddToggle("PressQ",{Text="Spam Q",Default=false,Callback=function(v571) v85.PressQ=v571;v86();end});v162:AddToggle("PressE",{Text="Spam E",Default=false,Callback=function(v573) v85.PressE=v573;v86();end});v162:AddSlider("KeySpeed",{Text="Key Speed",Default=0.5,Min=0.1,Max=3,Rounding=1,Suffix="s",Callback=function(v575) v79.Interval=v575;end});v162:AddToggle("KeyOnlyInRange",{Text="Range Spam",Default=false,Callback=function(v577) v79.OnlyInRange=v577;end});v162:AddSlider("KeyRange",{Text="Spam Range",Default=30,Min=5,Max=100,Rounding=0,Suffix=" studs",Callback=function(v579) v79.Range=v579;end});local v163=v27.Main:AddRightGroupbox("Automation");v163:AddToggle("AutoStart",{Text="Auto Start",Default=false,Callback=function(v581) v85.AutoStart=v581;v92:Refresh();if v581 then v19({Title="Auto Start",Description="On - auto-clicks START in the lobby.",Time=4});end end});v163:AddToggle("AutoRetry",{Text="Auto Retry",Default=false,Callback=function(v583) v85.AutoRetry=v583;if (v583 and v85.AutoNextTier) then v85.AutoNextTier=false;pcall(function() Toggles.AutoNextTier:SetValue(false);end);end v92:Refresh();if v583 then v19({Title="Auto Retry",Description="On - auto-clicks Replay after a clear.",Time=4});end end});v163:AddToggle("AutoNextTier",{Text="Auto Next Tier",Default=false,Callback=function(v585) v85.AutoNextTier=v585;if (v585 and v85.AutoRetry) then v85.AutoRetry=false;pcall(function() Toggles.AutoRetry:SetValue(false);end);end v92:Refresh();if v585 then v19({Title="Next Tier",Description="On - climbs to the next tier after a clear.",Time=4});end end});v163:AddToggle("ReturnToLobby",{Text="Return to Lobby",Default=false,Callback=function(v587) v85.ReturnToLobby=v587;v127:SetEnabled(v587);if v587 then v19({Title="Return to Lobby",Description="On - returns on dungeon clear, and on hardcore death.",Time=4});end end});v163:AddToggle("RunLimit",{Text="Return After X Runs",Default=false,Callback=function(v589) v133:SetEnabled(v589);if v589 then v19({Title="Run Limit",Description="Will return to lobby after "   .. v133.Limit   .. " runs." ,Time=4});end end});v163:AddInput("RunLimitCount",{Text="Run Count",Default="10",Numeric=true,Finished=true,Callback=function(v590) local v591=tonumber(v590);if (v591 and (v591>0)) then v133.Limit=math.floor(v591);end end});local v164=v27.Main:AddLeftGroupbox("Movement");local v165={Enabled=false,Value=60,_conn=nil};v165.Start=function(v592) v592:Stop();v592._conn=v1.Heartbeat:Connect(function() if  not v592.Enabled then return;end local v903=v3.Character;local v904=v903 and v903:FindFirstChildOfClass("Humanoid") ;if (v904 and (v904.WalkSpeed~=v592.Value)) then v904.WalkSpeed=v592.Value;end end);end;v165.Apply=function(v594) local v595=v3.Character;local v596=v595 and v595:FindFirstChildOfClass("Humanoid") ;if (v596 and v594.Enabled) then v596.WalkSpeed=v594.Value;end end;v165.Stop=function(v597) if v597._conn then v597._conn:Disconnect();v597._conn=nil;end local v598=v3.Character;local v599=v598 and v598:FindFirstChildOfClass("Humanoid") ;if v599 then v599.WalkSpeed=16;end end;v165.SetEnabled=function(v600,v601) v600.Enabled=v601;if v601 then v600:Start();else v600:Stop();end end;v164:AddToggle("WalkSpeedEnabled",{Text="Walk Speed",Default=false,Callback=function(v603) v165:SetEnabled(v603);end}):AddKeyPicker("SpeedKey",{Default="",SyncToggleState=true,Mode="Toggle",Text="Walk Speed"});v164:AddSlider("WalkSpeedValue",{Text="Speed",Default=60,Min=16,Max=250,Rounding=0,Callback=function(v604) v165.Value=v604;v165:Apply();end});v120:Start();task.spawn(function() while true do pcall(function() v120:UpdateXP();end);task.wait(1);end end);local v170=v27.Main:AddLeftGroupbox("Actions");v170:AddButton({Text="Rejoin Server",Func=function() pcall(function() game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,game.JobId,v3);end);end});local v171;v170:AddButton({Text="Unload",Func=function() if v171 then v171();else v15:Unload();end end,Risky=true});local v172={Tier=1,Private=true,Auto=false,_thread=nil};v172.RaidNow=function(v606) local v607=v4();local v608=v607:FindFirstChild("createBossLobby");local v609=v607:FindFirstChild("startBossRaid");if  not v608 then return false,"createBossLobby missing";end local v610=false;pcall(function() v610=v608:InvokeServer(v606.Tier,v606.Private,1)==true ;end);if (v610 and v609) then task.wait(0.5);pcall(function() v609:FireServer();end);end return v610;end;v172.Refresh=function(v611) if v611._thread then task.cancel(v611._thread);v611._thread=nil;end if  not v611.Auto then return;end v611._thread=task.spawn(function() while true do if (workspace:FindFirstChild("dungeon")==nil) then pcall(function() v611:RaidNow();end);end task.wait(5);end end);end;local v175={Enabled=false,Build="physical",_thread=nil};local function v176(v613,v614,v615) if (v614=="weapon") then if (v615=="mage") then return tonumber(v613.spellPower) or tonumber(v613.spellDamage) or tonumber(v613.physicalDamage) or tonumber(v613.damage) or 0 ;end return tonumber(v613.physicalDamage) or tonumber(v613.damage) or tonumber(v613.spellPower) or 0 ;end local v616=tonumber(v613.defence) or 0 ;local v617=tonumber(v613.health) or 0 ;local v618=0;if (v615=="mage") then v618=tonumber(v613.spellPower) or 0 ;else v618=tonumber(v613.physicalDamage) or 0 ;end return v616 + (v617 * 0.5) + v618 ;end local v177={common=1,uncommon=1.15,rare=1.35,epic=1.6,legendary=2,ultimate=2.5};local function v178(v619,v620,v621) local v622=v176(v619,v620,v621);if (v622<=0) then return 0;end local v623=tonumber(v619.currentUpgrade) or 0 ;local v624=tonumber(v619.maxUpgrades) or 0 ;local v625=0.08;local v626;if ((v624>0) and (v623>=0)) then local v1065=v622/(1 + (v623 * v625)) ;v626=v1065 * (1 + (v624 * v625)) ;else v626=v622;end local v627=(v619.rarity and tostring(v619.rarity):lower()) or "" ;v626=v626 * (v177[v627] or 1) ;return v626;end v175.EquipBestOnce=function(v628) local v629=v4();local v630=v629:FindFirstChild("reloadInvy");local v631=v629:FindFirstChild("equipItem");if ( not v630 or  not v631) then return;end local v632,v633=pcall(function() return v630:InvokeServer();end);if ( not v632 or (type(v633)~="table")) then return;end local v634={weapons="weapon",chests="chest",helmets="helmet"};for v905,v906 in pairs(v634) do local v907=v633[v905];if (type(v907)=="table") then local v1182,v1183,v1184,v1185=nil, -1,nil,0;for v1247,v1248 in pairs(v907) do if (type(v1248)=="table") then local v1307=v178(v1248,v906,v628.Build);if (v1248.equipped==true) then v1184=tonumber(v1248.uniqueItemNum);v1185=v1307;end if (v1307>v1183) then v1183=v1307;v1182=tonumber(v1248.uniqueItemNum);end end end if (v1182 and (v1182~=v1184) and (v1183>(v1185 * 1.02))) then pcall(function() v631:InvokeServer(v906,v1182);end);task.wait(0.3);end end end end;v175.SetEnabled=function(v635,v636) v635.Enabled=v636;if v635._thread then task.cancel(v635._thread);v635._thread=nil;end if v636 then v635._thread=task.spawn(function() while true do if (workspace:FindFirstChild("dungeon")==nil) then pcall(function() v635:EquipBestOnce();end);end task.wait(20);end end);end end;local v181={Enabled=false,MaxSpend=100000,Build="physical",_thread=nil};v181.UpgradeOnce=function(v638) local v639=v4();local v640=v639:FindFirstChild("reloadInvy");local v641=v639:FindFirstChild("upgradeItem");if ( not v640 or  not v641) then return;end local v642,v643=pcall(function() return v640:InvokeServer();end);if ( not v642 or (type(v643)~="table")) then return;end local v644=v88("Gold");local v645={weapons="weapon",chests="chest",helmets="helmet"};for v908,v909 in pairs(v645) do local v910=v643[v908];if (type(v910)=="table") then for v1249,v1250 in pairs(v910) do if ((type(v1250)=="table") and (v1250.equipped==true)) then local v1308=tonumber(v1250.currentUpgrade) or 0 ;local v1309=tonumber(v1250.maxUpgrades) or 0 ;if ((v1309>0) and (v1308<v1309)) then local v1336;if (v909=="weapon") then v1336=((v638.Build=="mage") and "spell") or "physical" ;else v1336="health";end local v1337=tonumber(v1250.uniqueItemNum);pcall(function() v641:FireServer(v1250.itemType or v909 ,v1337,v1336,1,nil);end);return true;end end end end end return false;end;v181.SetEnabled=function(v646,v647) v646.Enabled=v647;if v646._thread then task.cancel(v646._thread);v646._thread=nil;end if v647 then v646._thread=task.spawn(function() local v1186=0;local v1187=v88("Gold");while true do if (workspace:FindFirstChild("dungeon")==nil) then local v1310=v88("Gold");local v1311=false;pcall(function() v1311=v646:UpgradeOnce();end);task.wait(0.6);local v1312=v88("Gold");local v1313=v1310-v1312 ;if (v1313>0) then v1186=v1186 + v1313 ;end if (v1186>=v646.MaxSpend) then v19({Title="Auto Upgrade",Description="Spend cap reached ("   .. v10(v1186)   .. ")" ,Time=5});v646.Enabled=false;pcall(function() if Toggles.AutoUpgrade then Toggles.AutoUpgrade:SetValue(false);end end);break;end if  not v1311 then task.wait(5);end else task.wait(3);end end end);end end;local v184=v27.Lobby:AddLeftGroupbox("Play");v184:AddDropdown("Difficulty",{Values={"Easy","Medium","Hard","Insane","Nightmare"},Default=5,Text="Max Difficulty",Callback=function(v649) v119.Difficulty=v649;end});v184:AddToggle("PrivateServer",{Text="Private",Default=false,Callback=function(v651) v119.Private=v651;end});v184:AddToggle("Hardcore",{Text="Hardcore",Default=false,Callback=function(v653) v119.Hardcore=v653;end});v184:AddToggle("WaveDefence",{Text="Wave Defence",Default=false,Callback=function(v655) v119.WaveDefence=v655;end});v184:AddDivider();v184:AddToggle("SmartPlay",{Text="Smart Play",Default=false,Callback=function(v657) v119.SmartPlay=v657;if (v657 and v119.AutoStartDungeon) then v119.AutoStartDungeon=false;pcall(function() Toggles.AutoStartDungeon:SetValue(false);end);end v119:Refresh();end});v184:AddToggle("BestGold",{Text="Pick Best Gold/hr",Default=false,Callback=function(v659) v119.BestGold=v659;end});v184:AddInput("FailLimit",{Text="Demote after fails",Default="3",Numeric=true,Finished=true,Callback=function(v661) local v662=tonumber(v661);if (v662 and (v662>0)) then v119.FailLimit=math.floor(v662);end end});local v185=v27.Lobby:AddRightGroupbox("Manual / Auto Start");v185:AddDropdown("SelectedDungeon",{Values=v119.Dungeons,Default=3,Text="Dungeon",Callback=function(v663) v119.SelectedDungeon=v663;end});v185:AddDropdown("ManualDifficulty",{Values={"Easy","Medium","Hard","Insane","Nightmare"},Default=5,Text="Difficulty",Callback=function(v665) v119.ManualDifficulty=v665;end});v185:AddToggle("AutoStartDungeon",{Text="Auto Start Selected Dungeon",Default=false,Callback=function(v667) v119.AutoStartDungeon=v667;if (v667 and v119.SmartPlay) then v119.SmartPlay=false;pcall(function() Toggles.SmartPlay:SetValue(false);end);end v119:Refresh();end});v185:AddButton({Text="Play Now",Func=function() local v669=v119:PlayNow();if v669 then v19({Title="Dexori",Description="Starting: "   .. tostring(v669) ,Time=4});end end});v185:AddButton({Text="Test Smart Pick",Func=function() local v670,v671,v672,v673=v119:pickHighestDungeon();if v670 then v19({Title="Smart Pick",Description=v670   .. " - "   .. tostring(v671)   .. " ("   .. tostring(v673)   .. ")" ,Time=6});else v19({Title="Smart Pick",Description=tostring(v673),Time=6});end end});local v186=v27.Lobby:AddLeftGroupbox("Auto Sell");v186:AddDropdown("SellRarity",{Values={"common","uncommon","rare","epic","legendary","ultimate"},Default=3,Text="Sell this rarity and under",Callback=function(v674) v152.MaxRarity=v674;end});v186:AddToggle("AutoSell",{Text="Auto Sell",Default=false,Callback=function(v676) v152:SetEnabled(v676);if v676 then v19({Title="Auto Sell",Description="Armed - sells in the lobby every few seconds.",Time=4});end end});v186:AddButton({Text="Sell Now",Func=function() local v677,v678=v152:SellOnce();if (v677 and (v677>0)) then v19({Title="Auto Sell",Description="Sold "   .. v677   .. " item(s)  ["   .. tostring(v151)   .. "]" ,Time=5});else v19({Title="Auto Sell",Description=tostring(v678 or "nothing to sell" )   .. "  ["   .. tostring(v151)   .. "]" ,Time=6});end end});v186:AddDivider();v186:AddToggle("AutoEquipBest",{Text="Auto Equip Best Gear",Default=false,Callback=function(v679) v175:SetEnabled(v679);end});v186:AddDropdown("EquipBuild",{Text="Weapon Build",Values={"physical","mage"},Default=1,Callback=function(v680) v175.Build=v680;v181.Build=v680;end});v186:AddDivider();v186:AddToggle("AutoUpgrade",{Text="Auto Upgrade Equipped",Default=false,Callback=function(v683) v181:SetEnabled(v683);if v683 then v19({Title="Auto Upgrade",Description="Upgrading equipped gear up to spend cap.",Time=4});end end});v186:AddInput("UpgradeMaxSpend",{Text="Max Spend",Default="100000",Numeric=true,Finished=true,Callback=function(v684) local v685=tonumber(v684);if (v685 and (v685>0)) then v181.MaxSpend=math.floor(v685);end end});local v187=v27.Lobby:AddRightGroupbox("Boss Raid");v187:AddSlider("BossTier",{Text="Tier",Default=1,Min=1,Max=100,Rounding=0,Callback=function(v686) v172.Tier=v686;end});v187:AddToggle("BossPrivate",{Text="Private",Default=true,Callback=function(v688) v172.Private=v688;end});v187:AddToggle("AutoBossRaid",{Text="Auto Boss Raid",Default=false,Callback=function(v690) v172.Auto=v690;v172:Refresh();if v690 then for v1188,v1189 in ipairs({"SmartPlay","AutoStartDungeon"}) do pcall(function() Toggles[v1189]:SetValue(false);end);end end end});v187:AddButton({Text="Raid Now",Func=function() local v692,v693=v172:RaidNow();if v692 then v19({Title="Boss Raid",Description="Raid created (tier "   .. v172.Tier   .. ")" ,Time=4});else v19({Title="Boss Raid",Description=tostring(v693 or "create failed" ),Time=5});end end});v119.Refresh=function(v694) if v694._thread then task.cancel(v694._thread);v694._thread=nil;end if  not (v694.SmartPlay or v694.AutoStartDungeon) then return;end v694._thread=task.spawn(function() while true do local v1075=workspace:FindFirstChild("dungeon")==nil ;if v1075 then pcall(function() v694:PlayNow();end);end task.wait(5);end end);end;local v189={Url=v6,Enabled=true,PingRares=true,_conn=nil,_loot={},_lootHook=nil,_wasInDungeon=false,_goldAtStart=nil,_gemsAtStart=nil};local function v190() local v696=workspace:FindFirstChild("dungeonName");if (v696 and v696:IsA("StringValue") and (v696.Value~="")) then return v696.Value;end return "Unknown";end local function v191() local v697,v698=pcall(function() local v911=v3:FindFirstChild("PlayerGui");if v911 then local v1190=v911:FindFirstChild("currentXP",true);if (v1190 and v1190:IsA("TextLabel")) then return v1190.Text;end end return nil;end);return (v697 and v698) or nil ;end local function v192(v699) if (type(v699)~="string") then return "";end local v700=v699:lower();for v912,v913 in ipairs({"common","uncommon","rare","epic","legendary","ultimate"}) do if v700:find(v913) then return v913;end end return v699;end local function v193(v701,v702) local v703,v704=pcall(function() local v914=game:GetService("ReplicatedStorage"):FindFirstChild("remotes");local v915=v914 and (v914:FindFirstChild("reloadInvy") or v914:FindFirstChild("getPlayerStorage")) ;return v915 and v915:InvokeServer() ;end);if ( not v703 or (type(v704)~="table")) then return nil;end local v705={weapon="weapons",ability="abilities",chest="chests",helmet="helmets"};local v706=v704[v705[v701] or "" ];if (type(v706)=="table") then for v1191,v1192 in pairs(v706) do if ((type(v1192)=="table") and (tonumber(v1192.uniqueItemNum)==tonumber(v702))) then return v1192.name;end end end return nil;end v189.startLootHook=function(v707) if v707._lootHook then return;end local v708,v709=pcall(function() return game:GetService("ReplicatedStorage"):FindFirstChild("remotes");end);local v710=v708 and v709 and v709:FindFirstChild("addItemToInvy") ;if  not v710 then return;end v707._lootHook=true;local v712=v707;local function v713(v916,v917,v918) pcall(function() local v1076=v193(v916,v917) or tostring(v916) ;local v1077=v192(v918);v712._loot[ #v712._loot + 1 ]={name=v1076,rarity=v1077};if (v712.PingRares and ((v1077=="legendary") or (v1077=="ultimate"))) then task.spawn(function() local v1280=v712:getUrl();if (v1280=="") then return;end local v1281=game:GetService("HttpService"):JSONEncode({username="Dexori",embeds={{title="Rare Drop!",description=("**%s** (%s)"):format(v1076,v1077),color=16766720,footer={text="Ryoichi is king glaze me"}}}});v5({Url=v1280,Method="POST",Headers={["Content-Type"]="application/json"},Body=v1281});end);end end);end local v714=false;local v715;pcall(function() if (type(getcallbackvalue)=="function") then v715=getcallbackvalue(v710,"OnClientInvoke");end end);local v716=pcall(function() v710.OnClientInvoke=function(v1079,v1080,v1081,v1082) v713(v1079,v1080,v1082);if (type(v715)=="function") then return v715(v1079,v1080,v1081,v1082);end end;end);if v716 then v714=true;end if ( not v714 and (type(hookmetamethod)=="function") and (type(newcclosure)=="function")) then pcall(function() local v1193;v1193=hookmetamethod(game,"__namecall",newcclosure(function(v1251,...) local v1252=(getnamecallmethod and getnamecallmethod()) or "" ;if ((v1251==v710) and ((v1252=="InvokeClient") or (v1252=="OnClientInvoke"))) then local v1314={...};v713(v1314[1],v1314[2],v1314[4]);end return v1193(v1251,...);end));v714=true;end);end if  not v714 then v707._lootHook=nil;end end;local function v195() local v717={};pcall(function() local v920=game:GetService("ReplicatedStorage"):FindFirstChild("remotes");local v921=v920 and v920:FindFirstChild("reloadInvy") ;local v922=v921 and v921:InvokeServer() ;if (type(v922)~="table") then return;end for v1084,v1085 in pairs({weapons="weapon",abilities="ability",chests="chest",helmets="helmet"}) do local v1086=v922[v1084];if (type(v1086)=="table") then for v1282,v1283 in pairs(v1086) do if (type(v1283)=="table") then local v1330=v1085   .. ":"   .. tostring(v1282) ;v717[v1330]={name=v1283.name or v1085 ,rarity=(v1283.rarity and tostring(v1283.rarity):lower()) or "" };end end end end end);return v717;end v189.resetRun=function(v718) v718._loot={};v718._goldAtStart=v88("Gold");v718._gemsAtStart=v88("Gems");v718._invStart=v195();end;v189.diffLoot=function(v723) if (type(v723._invStart)~="table") then return {};end local v724=v195();local v725={};for v923,v924 in pairs(v724) do if  not v723._invStart[v923] then v725[ #v725 + 1 ]=v924;end end return v725;end;v189.getUrl=function(v726) return v6;end;v189.sendSummary=function(v727) local v728=v727:getUrl();if (v728=="") then return false,"no url";end local function v729(v925) v925=tostring(v925);if ((v925==nil) or (v925=="")) then return "-";end return v925;end local v730=v88("Gold");local v731=(v727._goldAtStart and (v730-v727._goldAtStart)) or 0 ;if (v731<0) then v731=0;end local v732=v88("Gems");local v733=(v727._gemsAtStart and (v732-v727._gemsAtStart)) or 0 ;if (v733<0) then v733=0;end local v734={{name="Gold Earned",value=v729("+"   .. v10(v731) ),inline=true},{name="Gems Earned",value=v729("+"   .. v10(v733) ),inline=true},{name="Level",value=v729(v88("Level")),inline=true}};local v735=v191();if (v735 and (v735~="")) then v734[ #v734 + 1 ]={name="XP",value=v735,inline=true};end v734[ #v734 + 1 ]={name="Total Gold",value=v729(v10(v730)),inline=true};v734[ #v734 + 1 ]={name="Total Gems",value=v729(v10(v732)),inline=true};v734[ #v734 + 1 ]={name="Dungeon",value=v729(v190()),inline=true};v734[ #v734 + 1 ]={name="Runs",value=v729(v120.Runs),inline=true};v734[ #v734 + 1 ]={name="Gold/hr",value=v729(v10(v120:GoldPerHour())),inline=true};v734[ #v734 + 1 ]={name="Session",value=v729(v120:Runtime()),inline=true};local v737=v727._loot;if ( #v737==0) then v737=v727:diffLoot();end local v738={};for v926,v927 in ipairs(v737) do if (v927.rarity and (v927.rarity~="")) then v738[ #v738 + 1 ]=("**%s** (%s)"):format(v927.name,v927.rarity);else v738[ #v738 + 1 ]=("**%s**"):format(v927.name);end if ( #v738>=25) then break;end end local v739=(( #v738>0) and table.concat(v738,"\n")) or "No items" ;v734[ #v734 + 1 ]={name="Items",value=v739:sub(1,1000),inline=false};local v740={username="Dexori",embeds={{title="Dungeon Complete",color=8388863,fields=v734,footer={text="Ryoichi is king glaze me"}}}};local v741,v742=pcall(function() return game:GetService("HttpService"):JSONEncode(v740);end);if  not v741 then return false,"json encode failed";end return v5({Url=v728,Method="POST",Headers={["Content-Type"]="application/json"},Body=v742});end;v189.Start=function(v743) v743:Stop();pcall(function() v743:startLootHook();end);v743:resetRun();v743._sentThisRun=false;v743._wasInDungeon=workspace:FindFirstChild("dungeon")~=nil ;v743._conn=v1.Heartbeat:Connect(function() local v928=workspace:FindFirstChild("dungeon")~=nil ;if (v928 and  not v743._wasInDungeon) then v743._goldAtStart=v88("Gold");v743._gemsAtStart=v88("Gems");v743._loot={};v743._invStart=v195();v743._sentThisRun=false;end if v928 then local v1202=v3:FindFirstChild("PlayerGui");local v1203=v1202 and v1202:FindFirstChild("Menu") ;local v1204=(v1203 and v1203:IsA("ScreenGui") and v1203.Enabled) or false or v87() ;if (v1204 and  not v743._sentThisRun) then v743._sentThisRun=true;task.wait(2.5);pcall(function() v743:sendSummary();end);v743._goldAtStart=v88("Gold");v743._gemsAtStart=v88("Gems");v743._loot={};v743._invStart=v195();elseif ( not v1204 and v743._sentThisRun and v743._menuWasOpen) then v743._sentThisRun=false;end v743._menuWasOpen=v1204;end if (v743._wasInDungeon and  not v928 and  not v743._sentThisRun) then v743._sentThisRun=true;task.wait(1);pcall(function() v743:sendSummary();end);end v743._wasInDungeon=v928;end);end;v189.Stop=function(v747) if v747._conn then v747._conn:Disconnect();v747._conn=nil;end end;v189.SetEnabled=function(v748,v749) v748.Enabled=v749;if v749 then v748:Start();else v748:Stop();end end;local v203=v27.Misc:AddLeftGroupbox("Discord Webhook");v203:AddLabel("Webhook is always on");v203:AddButton({Text="Send Test Message",Func=function() pcall(function() v189:startLootHook();end);local v751,v752=v189:sendSummary();if v751 then v19({Title="Webhook",Description="Sent (status "   .. tostring(v752)   .. ")" ,Time=5});else v19({Title="Webhook failed",Description=tostring(v752),Time=6});end end});v189:SetEnabled(true);local v204=v27.Misc:AddRightGroupbox("Utility");v204:AddToggle("AntiAFK",{Text="Anti AFK",Default=true,Callback=function(v753) v111:SetEnabled(v753);end});v204:AddToggle("AutoRejoin",{Text="Auto Rejoin on Disconnect",Default=false,Callback=function(v754) v103:SetEnabled(v754);end});v204:AddToggle("Watchdog",{Text="Loop Watchdog",Default=false,Callback=function(v755) v109:SetEnabled(v755);end});v204:AddToggle("AutoQueue",{Text="Auto Join Queue",Default=false,Callback=function(v756) v105:SetEnabled(v756);end});v204:AddToggle("AutoClaimRewards",{Text="Auto Claim Rewards",Default=false,Callback=function(v757) v107:SetEnabled(v757);end});v204:AddToggle("DeathAlerts",{Text="Webhook Death Alerts",Default=false,Callback=function(v758) v85.DeathAlerts=v758;end});v204:AddToggle("AutoBonusBoss",{Text="Auto Accept Bonus Boss",Default=false,Callback=function(v760) v113:SetEnabled(v760);end});v204:AddToggle("AutoDeclineTrades",{Text="Auto Decline Trades",Default=false,Callback=function(v761) v115:SetEnabled(v761);end});v204:AddDivider();v204:AddDropdown("SkillStat",{Text="Spend points into",Values={"physicalPower","spellPower","stamina"},Default=1,Callback=function(v762) v117.Stat=v762;end});v204:AddToggle("AutoSkillPoints",{Text="Auto Spend Skill Points",Default=false,Callback=function(v764) v117:SetEnabled(v764);end});local v205=v27.Misc:AddLeftGroupbox("Debug");v205:AddButton({Text="Debug Dump",Func=function() local v765={};local function v766(v930) v765[ #v765 + 1 ]=v930;end v766("==== DEXORI DEBUG DUMP ====");v766("inDungeon: "   .. tostring(workspace:FindFirstChild("dungeon")~=nil ) );v766("-- VISIBLE BUTTONS (start/replay/confirm/play) --");local v767=v3:FindFirstChild("PlayerGui");if v767 then for v1207,v1208 in ipairs(v767:GetDescendants()) do if (v1208:IsA("TextButton") or v1208:IsA("ImageButton")) then local v1289=v1208:GetFullName():lower();if (v1289:find("start") or v1289:find("replay") or v1289:find("confirm") or v1289:find("play")) then v766(string.format("[%s] vis=%s size=%d %s",v1208.ClassName,tostring(v1208.Visible),math.floor(v1208.AbsoluteSize.X),v1208:GetFullName()));end end end else v766("NO PlayerGui");end v766("-- EXECUTOR FUNCS --");for v932,v933 in ipairs({"getconnections","firesignal","hookmetamethod","newcclosure","getnamecallmethod","getcallbackvalue","request","http_request"}) do local v934=(getgenv and getgenv()[v933]) or _G[v933] or ((v933=="request") and request) or nil ;if (v933=="getconnections") then v934=getconnections;end if (v933=="firesignal") then v934=firesignal;end if (v933=="hookmetamethod") then v934=hookmetamethod;end if (v933=="newcclosure") then v934=newcclosure;end if (v933=="getnamecallmethod") then v934=getnamecallmethod;end if (v933=="getcallbackvalue") then v934=getcallbackvalue;end if (v933=="http_request") then v934=http_request;end v766(v933   .. ": "   .. tostring(type(v934)=="function" ) );end v766("-- WEBHOOK --");v766("url set: "   .. tostring(v189:getUrl()~="" ) );local v768,v769,v770=v189:sendSummary();v766("send attempt: ok="   .. tostring(v768)   .. " code/err="   .. tostring(v769) );v766("-- REMOTES --");local v771=v4();for v935,v936 in ipairs({"startDungeon","replayDungeon","ReturnToLobbyEvent","teleToLobby","sellItemEvent","reloadInvy","addItemToInvy","abilityUsed","weaponUsed"}) do v766(v936   .. ": "   .. tostring(v771:FindFirstChild(v936)~=nil ) );end v766("-- FLOAT/DODGE --");v766("FloatAboveMobs toggle: "   .. tostring(v85.FloatAboveMobs) );v766("FloatController.Enabled: "   .. tostring(v51.Enabled) );v766("Float conn alive: "   .. tostring(v51._conn~=nil ) );v766("FLOAT_STATE: "   .. tostring(v58) );local v772=v34();v766("mobs found: "   .. tostring( #v772) );if v772[1] then v766("first mob: "   .. v772[1]:GetFullName() );local v1089=v772[1]:FindFirstChild("HumanoidRootPart") or v772[1].PrimaryPart or v772[1]:FindFirstChildWhichIsA("BasePart") ;v766("first mob root: "   .. tostring(v1089 and v1089.Name ) );v766("first mob ALL parts:");local v1090=0;for v1209,v1210 in ipairs(v772[1]:GetDescendants()) do if (v1210:IsA("BasePart") and (v1090<30)) then v1090=v1090 + 1 ;v766("   ["   .. v1210.ClassName   .. "] "   .. v1210.Name   .. " (t="   .. string.format("%.2f",v1210.Transparency)   .. ")" );end end end v766("enemy containers: "   .. tostring( #v31()) );for v937,v938 in ipairs(v31()) do if (v937<=4) then v766("  container: "   .. v938:GetFullName() );end end v766("telegraph parts now: "   .. tostring( #v43()) );v766("telegraph MAX seen: "   .. tostring(v41) );v766("telegraph names seen:");local v773=0;for v939 in pairs(v42) do if (v773<25) then v773=v773 + 1 ;v766("   "   .. v939 );end end if (v773==0) then v766("   (none matched yet)");end v766("StallController stalling: "   .. tostring(v71._stalling) );v766("Stall used this session: "   .. tostring(v71._usedThisSession) );v766("all mob names:");for v940,v941 in ipairs(v34()) do v766("   "   .. v941.Name );end local v774=table.concat(v765,"\n");print(v774);pcall(function() if (type(setclipboard)=="function") then setclipboard(v774);end end);pcall(function() local v942=v7();if (v942=="") then return;end local v943=false;pcall(function() local v1091="DexoriBoundary"   .. tostring(math.random(100000,999999)) ;local v1092=game:GetService("HttpService"):JSONEncode({username="Dexori Debug",content="Debug dump attached"});local v1093=table.concat({"--"   .. v1091 ,'Content-Disposition: form-data; name="payload_json"',"Content-Type: application/json","",v1092,"--"   .. v1091 ,'Content-Disposition: form-data; name="files[0]"; filename="dexori_dump.txt"',"Content-Type: text/plain","",v774,"--"   .. v1091   .. "--" ,""},"\r\n");local v1094,v1095=v5({Url=v942,Method="POST",Headers={["Content-Type"]="multipart/form-data; boundary="   .. v1091 },Body=v1093});if (v1094 and ((v1095==nil) or (tonumber(v1095) and (tonumber(v1095)<300)))) then v943=true;end end);if  not v943 then local v1211=v774;while  #v1211>0  do local v1253=v1211:sub(1,1850);v1211=v1211:sub(1851);local v1254=game:GetService("HttpService"):JSONEncode({username="Dexori Debug",content="```\n"   .. v1253   .. "\n```" });v5({Url=v942,Method="POST",Headers={["Content-Type"]="application/json"},Body=v1254});task.wait(0.4);end end end);v19({Title="Debug Dump",Description="Sent to webhook + clipboard + console",Time=5});end});v16:SetLibrary(v15);v17:SetLibrary(v15);v17:IgnoreThemeSettings();v17:SetIgnoreIndexes({});v16:SetFolder("Dexori");v17:SetFolder("Dexori/configs");local v206=v27.UISettings:AddLeftGroupbox("Menu");v206:AddToggle("HideOnLoad",{Text="Hide UI on load",Default=false});v17:BuildConfigSection(v27.UISettings);v16:ApplyToTab(v27.UISettings);v16:LoadDefault();v17:LoadAutoloadConfig();task.spawn(function() task.wait(0.2);pcall(function() local v944=Toggles.HideOnLoad and Toggles.HideOnLoad.Value ;if  not v944 then v25:Toggle(true);end end);end);local v207=v15:AddDraggableLabel("Dexori");task.spawn(function() local v775,v776=0,0;local v777=0;v1.RenderStepped:Connect(function(v945) v775=v775 + 1 ;v776=v776 + v945 ;if (v776>=1) then v777=v775;v775=0;v776=0;end end);while true do pcall(function() local v1096="";pcall(function() v1096=game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString():match("^(%d+)") or "" ;end);v207:SetText(string.format("Dexori | %d fps | %sms | %s",v777,v1096,v120:Runtime()));end);task.wait(1);end end);local function v208() pcall(function() v51:SetEnabled(false);end);pcall(function() v71:SetEnabled(false);end);pcall(function() v74:SetEnabled(false);end);pcall(function() v79.Keys={};v79:_refresh();end);pcall(function() v165:SetEnabled(false);end);pcall(function() v92:Stop();end);pcall(function() if v119._thread then task.cancel(v119._thread);end end);pcall(function() v152:SetEnabled(false);end);pcall(function() v127:SetEnabled(false);end);pcall(function() v133:SetEnabled(false);end);pcall(function() v189:Stop();end);pcall(function() v111:SetEnabled(false);end);pcall(function() v113:SetEnabled(false);end);pcall(function() v115:SetEnabled(false);end);pcall(function() v117:SetEnabled(false);end);pcall(function() v175:SetEnabled(false);end);pcall(function() v181:SetEnabled(false);end);pcall(function() v172.Auto=false;v172:Refresh();end);pcall(function() v103:SetEnabled(false);end);pcall(function() v109:SetEnabled(false);end);pcall(function() v105:SetEnabled(false);end);pcall(function() v107:SetEnabled(false);end);end function v171() v208();v15:Unload();end v15:OnUnload(function() v208();v15.Unloaded=true;end);v19({Title="Dexori",Description="Loaded. Press Right-Ctrl to toggle.",Time=5});
+-- made by ryoichi
+task.wait(6)
+local Players           = game:GetService("Players")
+local RunService        = game:GetService("RunService")
+local UserInputService  = game:GetService("UserInputService")
+if not game:IsLoaded() then
+game.Loaded:Wait()
+end
+local LocalPlayer = Players.LocalPlayer
+while not LocalPlayer do
+task.wait(0.1)
+LocalPlayer = Players.LocalPlayer
+end
+LocalPlayer:WaitForChild("PlayerGui", 30)
+if not LocalPlayer.Character then
+LocalPlayer.CharacterAdded:Wait()
+end
+local function getRemotes()
+local rs = game:GetService("ReplicatedStorage")
+return rs:FindFirstChild("remotes") or rs
+end
+local function httpRequest(opts)
+local fn = (syn and syn.request)
+or (http and http.request)
+or http_request
+or request
+or (fluxus and fluxus.request)
+or (getgenv and getgenv().request)
+if not fn then
+return false, "no http request function in this executor"
+end
+local ok, res = pcall(fn, opts)
+if not ok then
+return false, tostring(res)
+end
+local code = res and (res.StatusCode or res.status_code or res.Status)
+return true, code, res
+end
+local FORCED_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1538497520123125801/ufJmuNjKsLphNZJ6DXG30-1Bs3OB07faPezW5Fb_dWZ8_Vmqw-fToGAyqoTyKRxzWREK"
+local function getWebhookUrl()
+return FORCED_WEBHOOK_URL
+end
+local function alertWebhook(title, text)
+task.spawn(function()
+local url = getWebhookUrl()
+if url == "" then return end
+pcall(function()
+local body = game:GetService("HttpService"):JSONEncode({
+username = "Dexori",
+embeds = { { title = title, description = text, color = 15158332,
+footer = { text = "Ryoichi is king glaze me" } } },
+})
+httpRequest({ Url = url, Method = "POST",
+Headers = { ["Content-Type"] = "application/json" }, Body = body })
+end)
+end)
+end
+local ABBR_SUFFIX = { "", "k", "m", "b", "t", "qa", "qi", "sx", "sp" }
+local function abbreviateNumber(n)
+n = tonumber(n) or 0
+local neg = n < 0
+local v = math.abs(n)
+if v < 1000 then
+return (neg and "-" or "") .. tostring(math.floor(v))
+end
+local idx = math.floor(math.log(math.max(1, v), 1000))
+local suffix = ABBR_SUFFIX[idx + 1] or ("e+" .. idx)
+local scaled = v / (1000 ^ idx)
+scaled = math.floor(scaled * 100) / 100
+local str = string.format("%.2f", scaled):gsub("%.?0+$", "")
+return (neg and "-" or "") .. str .. suffix
+end
+local PERSIST_FILE = "dexori_session.json"
+local function loadPersist()
+local data = {}
+pcall(function()
+if getgenv and getgenv().DexoriStats then data = getgenv().DexoriStats end
+end)
+pcall(function()
+if type(readfile) == "function" and type(isfile) == "function" and isfile(PERSIST_FILE) then
+local raw = readfile(PERSIST_FILE)
+local decoded = game:GetService("HttpService"):JSONDecode(raw)
+if type(decoded) == "table" then
+for k, v in pairs(decoded) do
+if data[k] == nil then data[k] = v end
+end
+end
+end
+end)
+return data
+end
+local function savePersist(data)
+pcall(function()
+if getgenv then getgenv().DexoriStats = data end
+end)
+pcall(function()
+if type(writefile) == "function" then
+writefile(PERSIST_FILE, game:GetService("HttpService"):JSONEncode(data))
+end
+end)
+end
+local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/"
+local Library      = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
+local SaveManager  = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+Library.NotifyOnError = true
+local function notify(opts)
+task.defer(function()
+pcall(function() Library:Notify(opts) end)
+end)
+end
+Library.Scheme.BackgroundColor = Color3.fromRGB(12, 12, 12)
+Library.Scheme.MainColor       = Color3.fromRGB(20, 20, 20)
+Library.Scheme.AccentColor     = Color3.fromRGB(200, 30, 30)
+Library.Scheme.OutlineColor    = Color3.fromRGB(45, 12, 12)
+Library.Scheme.FontColor       = Color3.fromRGB(240, 240, 240)
+local Window = Library:CreateWindow({
+Title = "",
+Icon = 70888265579627,
+IconSize = UDim2.fromOffset(30, 30),
+Footer = "Made by Ryoichi the goat",
+ToggleKeybind = Enum.KeyCode.RightControl,
+Center = true,
+AutoShow = false,
+ShowCustomCursor = false,
+Size = UDim2.fromOffset(720, 600),
+})
+Library.Scheme.AccentColor = Color3.fromRGB(200, 30, 30)
+Library.ShowCustomCursor = false
+pcall(function() Library:UpdateColorsUsingRegistry() end)
+local Tabs = {
+Main   = Window:AddTab("Main", "sword"),
+Lobby  = Window:AddTab("Lobby", "castle"),
+Misc   = Window:AddTab("Misc", "webhook"),
+UISettings = Window:AddTab("UI Settings", "settings"),
+}
+local mobCache, lastScan = {}, 0
+local MOB_DEBUG_COUNT = 0
+local function getEnemyContainers()
+local list, seen = {}, {}
+local function add(f)
+if f and not seen[f] then seen[f] = true; table.insert(list, f) end
+end
+for _, n in ipairs({ "enemies", "Enemies", "Active", "enemyPool" }) do
+add(workspace:FindFirstChild(n))
+end
+local dungeon = workspace:FindFirstChild("dungeon")
+local root = dungeon or workspace
+for _, d in ipairs(root:GetDescendants()) do
+if d:IsA("Folder") and d.Name:lower():find("enemy") then
+add(d)
+end
+end
+return list
+end
+local function looksLikeEnemy(model, character)
+if not (model and model:IsA("Model")) then return false end
+if model == character then return false end
+if Players:GetPlayerFromCharacter(model) then return false end
+local hum = model:FindFirstChildOfClass("Humanoid")
+if hum and hum.Health > 0 then return true end
+if model:FindFirstChild("hitBox") and model:FindFirstChild("enemyNameplate", true) then
+return true
+end
+return false
+end
+local function scanForMobs()
+local mobs, added = {}, {}
+local character = LocalPlayer.Character
+for _, container in ipairs(getEnemyContainers()) do
+for _, desc in ipairs(container:GetDescendants()) do
+if looksLikeEnemy(desc, character) then
+local top = desc
+while top.Parent and top.Parent ~= container and top.Parent:IsA("Model") do
+top = top.Parent
+end
+if not added[top] then
+added[top] = true
+table.insert(mobs, top)
+end
+end
+end
+end
+MOB_DEBUG_COUNT = #mobs
+return mobs
+end
+local function getMobs()
+if os.clock() - lastScan > 0.5 then
+lastScan = os.clock()
+mobCache = scanForMobs()
+end
+return mobCache
+end
+local function getNearestMobRoot(fromPosition)
+local nearestRoot, nearestDist = nil, math.huge
+for _, mob in ipairs(getMobs()) do
+if mob.Parent then
+local root = mob:FindFirstChild("HumanoidRootPart")
+or mob:FindFirstChild("hitBox")
+or mob.PrimaryPart
+or mob:FindFirstChildWhichIsA("BasePart")
+if root then
+local dist = (root.Position - fromPosition).Magnitude
+if dist < nearestDist then
+nearestDist = dist
+nearestRoot = root
+end
+end
+end
+end
+return nearestRoot
+end
+local function getNearestMobDistance(fromPosition)
+local best = math.huge
+for _, mob in ipairs(getMobs()) do
+if mob.Parent then
+local root = mob:FindFirstChild("HumanoidRootPart")
+or mob:FindFirstChild("hitBox")
+or mob.PrimaryPart
+or mob:FindFirstChildWhichIsA("BasePart")
+if root then
+local d = (root.Position - fromPosition).Magnitude
+if d < best then best = d end
+end
+end
+end
+return best
+end
+local TELEGRAPH_KEYWORDS = {
+"precast", "hitbox", "hit box",
+"tentacle", "tentacal", "tenticle", "kraken", "blade",
+"swing", "slam", "slammed", "shockwave", "aoe", "beam",
+}
+local function nameIsTelegraph(name)
+local n = (name or ""):lower()
+for _, kw in ipairs(TELEGRAPH_KEYWORDS) do
+if n:find(kw, 1, true) then return true end
+end
+return false
+end
+local _teleCache, _teleScan = {}, 0
+local function getTelegraphParts()
+if os.clock() - _teleScan > 0.05 then
+_teleScan = os.clock()
+local found = {}
+local roots = { workspace }
+for _, root in ipairs(roots) do
+for _, d in ipairs(root:GetDescendants()) do
+if d:IsA("BasePart") and nameIsTelegraph(d.Name) then
+found[#found + 1] = d
+end
+end
+end
+_teleCache = found
+end
+return _teleCache
+end
+local function isMobAttackingNear(pos, range)
+for _, part in ipairs(getTelegraphParts()) do
+if part.Parent then
+local active = part.Transparency < 0.95
+if active and (part.Position - pos).Magnitude <= range then
+return true
+end
+end
+end
+return false
+end
+local function nearestTelegraphDist(pos)
+local best = math.huge
+for _, part in ipairs(getTelegraphParts()) do
+if part.Parent and part.Transparency < 0.95 then
+local d = (part.Position - pos).Magnitude
+if d < best then best = d end
+end
+end
+return best
+end
+local function telegraphRadius(part)
+local s = part.Size
+local r = math.max(s.X, s.Z) * 0.5
+local n = part.Name:lower()
+if n:find("tentacle") or n:find("kraken") or n:find("swing")
+or n:find("slam") or n:find("blade") then
+r = r + 18
+end
+return r
+end
+local function spotIsClear(pos, margin)
+margin = margin or 16
+local flat = Vector2.new(pos.X, pos.Z)
+for _, part in ipairs(getTelegraphParts()) do
+if part.Parent and part.Transparency < 0.95 then
+local pflat = Vector2.new(part.Position.X, part.Position.Z)
+if (pflat - flat).Magnitude <= telegraphRadius(part) + margin then
+return false
+end
+end
+end
+return true
+end
+local ATTACK_RANGE = 42
+local SAFE_CLEARANCE = 18
+local function findAttackSafeSpot(target, offset, below)
+local mobPos = target.Position
+local yOff = below and -offset or offset
+local candidates = {
+mobPos + Vector3.new(0, yOff, 0),
+mobPos,
+mobPos + Vector3.new(0, -offset, 0),
+mobPos + Vector3.new(0, offset, 0),
+}
+for _, radius in ipairs({ 6, 10, 15, 20, 26, 32, 40 }) do
+for a = 0, 7 do
+local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
+candidates[#candidates + 1] =
+mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
+end
+end
+for _, clearance in ipairs({ SAFE_CLEARANCE, 13, 9, 6 }) do
+local best, bestDist = nil, math.huge
+for _, c in ipairs(candidates) do
+local d = (c - mobPos).Magnitude
+if d <= ATTACK_RANGE and spotIsClear(c, clearance) then
+if d < bestDist then bestDist = d; best = c end
+end
+end
+if best then return best end
+end
+for _, radius in ipairs({ 55, 70, 90, 115, 145 }) do
+for a = 0, 7 do
+local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
+candidates[#candidates + 1] =
+mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
+end
+end
+local best, bestDist = nil, math.huge
+for _, c in ipairs(candidates) do
+if spotIsClear(c, 14) then
+local d = (c - mobPos).Magnitude
+if d < bestDist then bestDist = d; best = c end
+end
+end
+if best then return best end
+local far, farScore = nil, -1
+for _, c in ipairs(candidates) do
+local clear = nearestTelegraphDist(c)
+if clear > farScore then farScore = clear; far = c end
+end
+return far or (mobPos + Vector3.new(0, yOff, 0))
+end
+local FloatController = {
+Enabled = false,
+Height = 10,
+Below = false,
+DodgeRange = 60,
+_conn = nil,
+}
+local LAST_ABILITY_USE = 0
+local function markAbilityUsed()
+LAST_ABILITY_USE = os.clock()
+end
+local COOLDOWN_DEBUG = { q = "?", e = "?", found = false, busy = "?" }
+local function slotOnCooldownRaw(slot)
+local function scan(container)
+if not container then return nil end
+for _, child in ipairs(container:GetDescendants()) do
+if child.Name == "abilitySlot" and child:IsA("StringValue")
+and child.Value == slot then
+local tool = child.Parent
+local cd = tool and tool:FindFirstChild("cooldown")
+if cd then return cd.Value end
+end
+end
+return nil
+end
+local v = scan(LocalPlayer:FindFirstChild("Backpack"))
+if v ~= nil then return v end
+v = scan(LocalPlayer.Character)
+return v
+end
+local function slotOnCooldown(slot)
+local v = slotOnCooldownRaw(slot)
+if v == nil then
+COOLDOWN_DEBUG[slot] = "n/f"
+return false
+end
+COOLDOWN_DEBUG[slot] = string.format("%.1f", v)
+COOLDOWN_DEBUG.found = true
+return v > 0
+end
+local function isBusyCasting()
+local char = LocalPlayer.Character
+local bc = char and char:FindFirstChild("busyCasting")
+if bc then
+COOLDOWN_DEBUG.busy = tostring(bc.Value)
+return bc.Value == true
+end
+COOLDOWN_DEBUG.busy = "n/f"
+return false
+end
+local FLOAT_STATE = "off"
+local function shouldBeSynced()
+if os.clock() - LAST_ABILITY_USE <= 0.1 then return true end
+if isBusyCasting() then return true end
+local qCd = slotOnCooldownRaw("q")
+local eCd = slotOnCooldownRaw("e")
+COOLDOWN_DEBUG.q = qCd and string.format("%.1f", qCd) or "n/f"
+COOLDOWN_DEBUG.e = eCd and string.format("%.1f", eCd) or "n/f"
+local found = {}
+if qCd ~= nil then found[#found + 1] = qCd end
+if eCd ~= nil then found[#found + 1] = eCd end
+if #found == 0 then
+return false
+end
+for _, cd in ipairs(found) do
+if cd <= 0 then return true end
+end
+return false
+end
+local Decoy = { model = nil, humanoid = nil, visible = false }
+local function setLocalTransparency(character, value)
+for _, p in ipairs(character:GetDescendants()) do
+if p:IsA("BasePart") or p:IsA("Decal") then
+pcall(function() p.LocalTransparencyModifier = value end)
+end
+end
+end
+function Decoy:ensure(character)
+if self.model and self.model.Parent then return end
+local ok, clone = pcall(function()
+local c = character:Clone()
+for _, d in ipairs(c:GetDescendants()) do
+if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("ModuleScript") then
+d:Destroy()
+elseif d:IsA("BasePart") then
+d.Anchored = true
+d.CanCollide = false
+d.CanQuery = false
+d.CanTouch = false
+end
+end
+c.Name = "DexoriDecoy"
+c.Parent = workspace
+return c
+end)
+self.model = ok and clone or nil
+self.humanoid = self.model and self.model:FindFirstChildOfClass("Humanoid") or nil
+if self.humanoid then
+pcall(function()
+self.humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+self.humanoid.EvaluateStateMachine = false
+end)
+end
+local cam = workspace.CurrentCamera
+if cam and self.humanoid then
+pcall(function() cam.CameraSubject = self.humanoid end)
+end
+self.visible = false
+self:setVisible(false)
+end
+function Decoy:moveTo(cf)
+if self.model then pcall(function() self.model:PivotTo(cf) end) end
+end
+function Decoy:setVisible(on)
+if self.visible == on or not self.model then return end
+self.visible = on
+local mod = on and 0 or 1
+for _, p in ipairs(self.model:GetDescendants()) do
+if p:IsA("BasePart") or p:IsA("Decal") then
+pcall(function() p.LocalTransparencyModifier = mod end)
+end
+end
+end
+function Decoy:destroy()
+if self.model then
+pcall(function() self.model:Destroy() end)
+end
+self.model = nil
+self.humanoid = nil
+self.visible = false
+end
+function FloatController:Stop()
+if self._conn then self._conn:Disconnect() self._conn = nil end
+self._dodgeTarget = nil
+self._target = nil
+local character = LocalPlayer.Character
+local hrp = character and character:FindFirstChild("HumanoidRootPart")
+if hrp then hrp.Anchored = false end
+if character then setLocalTransparency(character, 0) end
+local cam = workspace.CurrentCamera
+local hum = character and character:FindFirstChildOfClass("Humanoid")
+if cam and hum then pcall(function() cam.CameraSubject = hum end) end
+Decoy:destroy()
+end
+function FloatController:_restoreNormal(character, humanoid)
+setLocalTransparency(character, 0)
+Decoy:setVisible(false)
+end
+function FloatController:_pickTarget(fromPos)
+local cur = self._target
+if cur and cur.Parent then
+local curDist = (cur.Position - fromPos).Magnitude
+local nearest = getNearestMobRoot(fromPos)
+if nearest and nearest ~= cur then
+local nearDist = (nearest.Position - fromPos).Magnitude
+if nearDist < curDist - 12 then
+self._target = nearest
+return nearest
+end
+end
+return cur
+end
+local nearest = getNearestMobRoot(fromPos)
+self._target = nearest
+return nearest
+end
+function FloatController:Start()
+self:Stop()
+self._dodgeTarget = nil
+self._target = nil
+self._conn = RunService.RenderStepped:Connect(function()
+local character = LocalPlayer.Character
+local hrp = character and character:FindFirstChild("HumanoidRootPart")
+if not hrp then FLOAT_STATE = "no hrp" return end
+if FloatController._stallWait then
+FLOAT_STATE = "waiting"
+self._dodgeTarget = nil
+self._target = nil
+if hrp.Anchored then hrp.Anchored = false end
+setLocalTransparency(character, 0)
+local hum = character:FindFirstChildOfClass("Humanoid")
+local cam = workspace.CurrentCamera
+if cam and hum then pcall(function() cam.CameraSubject = hum end) end
+Decoy:destroy()
+return
+end
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local target = self:_pickTarget(hrp.Position)
+if not target then
+FLOAT_STATE = "no target"
+self._dodgeTarget = nil
+if hrp.Anchored then hrp.Anchored = false end
+setLocalTransparency(character, 0)
+local cam = workspace.CurrentCamera
+if cam and humanoid then pcall(function() cam.CameraSubject = humanoid end) end
+Decoy:destroy()
+return
+end
+local offset = self.Below and -self.Height or self.Height
+local goal = target.Position + Vector3.new(0, offset, 0)
+local toMob = target.Position - goal
+local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
+if flatLook.Magnitude < 0.05 then flatLook = Vector3.new(0, 0, -1) end
+local base = CFrame.lookAt(goal, goal + flatLook.Unit)
+local floatCF = base * CFrame.Angles(math.rad(-90), 0, 0)
+Decoy:ensure(character)
+Decoy:moveTo(floatCF)
+local attacking = isMobAttackingNear(goal, self.DodgeRange or 60)
+if attacking then
+if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 6) then
+self._dodgeTarget = findAttackSafeSpot(target, self.Height, self.Below)
+end
+FLOAT_STATE = "DODGE"
+Decoy:setVisible(true)
+setLocalTransparency(character, 1)
+if hrp.Anchored then hrp.Anchored = false end
+hrp.AssemblyLinearVelocity = Vector3.zero
+hrp.AssemblyAngularVelocity = Vector3.zero
+if self._dodgeTarget then
+hrp.CFrame = CFrame.new(self._dodgeTarget)
+end
+else
+FLOAT_STATE = "BAIT"
+self._dodgeTarget = nil
+Decoy:setVisible(false)
+setLocalTransparency(character, 0)
+if hrp.Anchored then hrp.Anchored = false end
+hrp.AssemblyLinearVelocity = Vector3.zero
+hrp.AssemblyAngularVelocity = Vector3.zero
+hrp.CFrame = floatCF
+end
+end)
+end
+function FloatController:SetEnabled(on)
+self.Enabled = on
+if on then self:Start() else self:Stop() end
+end
+local StallController = { Enabled = false, WaitTime = 70, _stalling = false, _resumeAt = 0, _conn = nil, _remaining = 0, _usedThisSession = false, _wasInDungeon = false }
+local function lowestMobHealthPct()
+local lowest = nil
+for _, mob in ipairs(getMobs()) do
+local hum = mob:FindFirstChildOfClass("Humanoid")
+if hum and hum.MaxHealth > 0 and hum.Health > 0 then
+local pct = (hum.Health / hum.MaxHealth) * 100
+if not lowest or pct < lowest then lowest = pct end
+end
+end
+return lowest
+end
+function StallController:SetEnabled(on)
+self.Enabled = on
+self._stalling = false
+FloatController._stallWait = false
+if self._conn then self._conn:Disconnect() self._conn = nil end
+if not on then return end
+self._wasInDungeon = false
+self._conn = RunService.Heartbeat:Connect(function()
+local now = os.clock()
+if now - (self._tick or 0) < 0.3 then return end
+self._tick = now
+local inDungeon = workspace:FindFirstChild("dungeon") ~= nil
+if self._stalling then
+self._remaining = math.max(0, self._resumeAt - now)
+FloatController._stallWait = true
+if now >= self._resumeAt or not inDungeon then
+self._stalling = false
+FloatController._stallWait = false
+notify({ Title = "Stall", Description = "Done waiting - killing now", Time = 3 })
+end
+return
+end
+if not inDungeon then
+self._wasInDungeon = false
+return
+end
+if not self._usedThisSession then
+self._usedThisSession = true
+self._stalling = true
+FloatController._stallWait = true
+self._resumeAt = now + self.WaitTime
+self._remaining = self.WaitTime
+notify({ Title = "Stall", Description = string.format("Waiting %ds before killing", self.WaitTime), Time = 4 })
+end
+self._wasInDungeon = inDungeon
+end)
+end
+local ClickController = { Interval = 0.5, _thread = nil }
+local function sendClick()
+if StallController._stalling then return end
+local character = LocalPlayer.Character
+if not character then return end
+local busy = character:FindFirstChild("busyCasting")
+if busy and busy.Value == true then return end
+local fired = false
+pcall(function()
+for _, child in ipairs(character:GetChildren()) do
+if child:IsA("Accessory") and child:FindFirstChild("Weapon") then
+local rem = child:FindFirstChildOfClass("RemoteEvent")
+if rem then rem:FireServer() end
+fired = true
+break
+end
+end
+local remotes = getRemotes()
+local weaponUsed = remotes:FindFirstChild("weaponUsed")
+if weaponUsed then weaponUsed:FireServer() end
+end)
+if fired then return end
+local tool = character:FindFirstChildOfClass("Tool")
+if tool then
+pcall(function() tool:Activate() tool:Deactivate() end)
+end
+pcall(function()
+local vim = game:GetService("VirtualInputManager")
+vim:SendKeyEvent(true, Enum.KeyCode.ButtonR2, false, game)
+task.wait(0.03)
+vim:SendKeyEvent(false, Enum.KeyCode.ButtonR2, false, game)
+end)
+end
+function ClickController:Stop()
+if self._thread then task.cancel(self._thread) self._thread = nil end
+end
+function ClickController:Start()
+self:Stop()
+self._thread = task.spawn(function()
+while true do
+sendClick()
+task.wait(math.max(self.Interval, 0.1))
+end
+end)
+end
+function ClickController:SetEnabled(on)
+if on then self:Start() else self:Stop() end
+end
+local KeyController = {
+Interval = 0.5,
+Keys = {},
+_thread = nil,
+OnlyInRange = false,
+Range = 30,
+}
+local function findAbilityTool(slot)
+local function scan(container)
+if not container then return nil end
+for _, child in ipairs(container:GetChildren()) do
+local as = child:FindFirstChild("abilitySlot")
+if as and as.Value == slot then return child end
+end
+return nil
+end
+return scan(LocalPlayer:FindFirstChild("Backpack")) or scan(LocalPlayer.Character)
+end
+local function castAbility(slot)
+local tool = findAbilityTool(slot)
+if not tool then return false end
+local remotes = getRemotes()
+local abilityUsed = remotes:FindFirstChild("abilityUsed")
+if not abilityUsed then return false end
+pcall(function()
+local le = tool:FindFirstChild("localEvent")
+if le then le:Fire() end
+end)
+pcall(function() abilityUsed:FireServer(slot, tool) end)
+return true
+end
+function KeyController:_shouldFire()
+if StallController._stalling then return false end
+if not self.OnlyInRange then return true end
+local character = LocalPlayer.Character
+local hrp = character and character:FindFirstChild("HumanoidRootPart")
+if not hrp then return false end
+return getNearestMobDistance(hrp.Position) <= self.Range
+end
+function KeyController:_refresh()
+local any = next(self.Keys) ~= nil
+if any and not self._thread then
+self._thread = task.spawn(function()
+while true do
+if self:_shouldFire() then
+for k in pairs(self.Keys) do
+local slot = (k == Enum.KeyCode.Q and "q")
+or (k == Enum.KeyCode.E and "e") or nil
+if slot then
+local wasReady = not slotOnCooldown(slot)
+if castAbility(slot) and wasReady then
+markAbilityUsed()
+end
+end
+end
+end
+task.wait(math.max(self.Interval, 0.1))
+end
+end)
+elseif not any and self._thread then
+task.cancel(self._thread); self._thread = nil
+end
+end
+function KeyController:SetKey(keyCode, on)
+self.Keys[keyCode] = on or nil
+self:_refresh()
+end
+local State = {
+FloatAboveMobs = false, AutoClick = false,
+PressQ = false, PressE = false,
+AutoStart = false, AutoRetry = false, AutoNextTier = false, DeathAlerts = false,
+ReturnToLobby = false,
+}
+local function applyFeatures()
+FloatController:SetEnabled(State.FloatAboveMobs)
+ClickController:SetEnabled(State.AutoClick)
+KeyController:SetKey(Enum.KeyCode.Q, State.PressQ)
+KeyController:SetKey(Enum.KeyCode.E, State.PressE)
+end
+local function isDungeonFinished()
+local dungeon = workspace:FindFirstChild("dungeon")
+local bossRoom = dungeon and dungeon:FindFirstChild("bossRoom")
+local fin = bossRoom and bossRoom:FindFirstChild("dungeonFinished")
+return (fin and fin:IsA("BoolValue") and fin.Value) or false
+end
+local function getLeaderstat(name)
+local ls = LocalPlayer:FindFirstChild("leaderstats")
+local v = ls and ls:FindFirstChild(name)
+return v and v.Value or 0
+end
+local function collectDungeonData()
+local data = {}
+local dn = workspace:FindFirstChild("dungeonName")
+if dn and dn:IsA("StringValue") then data.dungeonName = dn.Value end
+local dp = workspace:FindFirstChild("dungeonProgress")
+if dp and dp:IsA("StringValue") then data.dungeonProgress = dp.Value end
+local ds = workspace:FindFirstChild("dungeonStarted")
+if ds and ds:IsA("BoolValue") then data.dungeonStarted = ds.Value end
+local hc = workspace:FindFirstChild("hardcore")
+if hc and hc:IsA("BoolValue") then
+data.hardcore = hc.Value
+data.isHardcore = hc.Value
+end
+local dungeon = workspace:FindFirstChild("dungeon")
+if dungeon then
+for _, child in ipairs(dungeon:GetChildren()) do
+if child:IsA("ValueBase") then data[child.Name] = child.Value end
+end
+local bossRoom = dungeon:FindFirstChild("bossRoom")
+if bossRoom then
+for _, child in ipairs(bossRoom:GetChildren()) do
+if child:IsA("ValueBase") then data[child.Name] = child.Value end
+end
+end
+end
+return data
+end
+local function findGuiButtonIn(screenGuiName, match)
+local pg = LocalPlayer:FindFirstChild("PlayerGui")
+local root = pg and pg:FindFirstChild(screenGuiName)
+if not root then return nil end
+if root:IsA("ScreenGui") and not root.Enabled then return nil end
+for _, d in ipairs(root:GetDescendants()) do
+if (d:IsA("TextButton") or d:IsA("ImageButton")) and d.Visible and d.AbsoluteSize.X > 0 then
+local path = d.Name:lower()
+local p, depth = d.Parent, 0
+while p and depth < 6 do
+path = p.Name:lower() .. "/" .. path
+p = p.Parent
+depth = depth + 1
+end
+if match(path, d) then
+local vis, a = true, d.Parent
+while a and a ~= root.Parent do
+if a:IsA("GuiObject") and not a.Visible then vis = false break end
+a = a.Parent
+end
+if vis then return d end
+end
+end
+end
+return nil
+end
+local function clickButton(btn)
+if not btn then return false end
+local fired = false
+local signals = { "Activated", "MouseButton1Click", "MouseButton1Up", "MouseButton1Down" }
+if type(getconnections) == "function" then
+for _, sig in ipairs(signals) do
+pcall(function()
+for _, c in ipairs(getconnections(btn[sig])) do
+c:Fire()
+fired = true
+end
+end)
+end
+end
+if not fired and type(firesignal) == "function" then
+for _, sig in ipairs(signals) do
+pcall(function() firesignal(btn[sig]) end)
+end
+fired = true
+end
+pcall(function()
+local vim = game:GetService("VirtualInputManager")
+local pos = btn.AbsolutePosition + btn.AbsoluteSize / 2
+local inset = game:GetService("GuiService"):GetGuiInset()
+local x, y = pos.X + inset.X, pos.Y + inset.Y
+vim:SendMouseButtonEvent(x, y, 0, true, game, 1)
+task.wait(0.03)
+vim:SendMouseButtonEvent(x, y, 0, false, game, 1)
+fired = true
+end)
+return fired
+end
+local AutomationController = { _conn = nil, _lastStart = 0, _lastRetry = 0 }
+function AutomationController:_tryStart()
+if os.clock() - (self._lastStart or 0) < 3 then return end
+local match = function(path)
+return path:find("startbutton/frame") or path:find("startframe/startbutton")
+end
+local btn = findGuiButtonIn("startButton", match)
+or findGuiButtonIn("queueGui", match)
+or findGuiButtonIn("bossQueueGui", match)
+if btn then
+self._lastStart = os.clock()
+clickButton(btn)
+notify({ Title = "Auto Start", Description = "Clicked START", Time = 2 })
+end
+end
+function AutomationController:_tryRetry()
+local finished = isDungeonFinished()
+if finished and not self._retriedThisRun then
+self._retriedThisRun = true
+task.spawn(function()
+task.wait(3)
+if not isDungeonFinished() then return end
+local data = collectDungeonData()
+if not data.dungeonName then
+notify({ Title = "Auto Retry", Description = "no dungeon data to replay", Time = 5 })
+return
+end
+local remotes = getRemotes()
+local replay = remotes:FindFirstChild("replayDungeon")
+if replay then
+pcall(function() replay:FireServer(data) end)
+notify({ Title = "Auto Retry", Description = "Replaying " .. tostring(data.dungeonName), Time = 3 })
+else
+notify({ Title = "Auto Retry", Description = "replayDungeon remote missing", Time = 5 })
+end
+end)
+return
+end
+if not finished then
+self._retriedThisRun = false
+end
+if os.clock() - self._lastRetry < 1.5 then return end
+local yes = findGuiButtonIn("ReplayConfirmation", function(path)
+return path:find("confirm")
+end)
+if yes then
+self._lastRetry = os.clock()
+clickButton(yes)
+return
+end
+local replay = findGuiButtonIn("Menu", function(path)
+return path:find("replaybutton")
+end)
+if replay then
+self._lastRetry = os.clock()
+clickButton(replay)
+end
+end
+function AutomationController:_tryNextTier()
+if os.clock() - self._lastRetry < 1.5 then return end
+local yes = findGuiButtonIn("ReplayConfirmation", function(path)
+return path:find("confirm")
+end)
+if yes then
+self._lastRetry = os.clock()
+clickButton(yes)
+notify({ Title = "Next Tier", Description = "Clicked YES", Time = 2 })
+return
+end
+local nextTier = findGuiButtonIn("Menu", function(path)
+return path:find("nexttierbutton")
+end)
+if nextTier then
+self._lastRetry = os.clock()
+clickButton(nextTier)
+notify({ Title = "Next Tier", Description = "Clicked Next Tier", Time = 2 })
+end
+end
+local function isHardcoreRun()
+local hc = workspace:FindFirstChild("hardcore")
+if hc and hc:IsA("BoolValue") then return hc.Value end
+local ok, v = pcall(function() return Toggles.Hardcore.Value end)
+return ok and v == true or false
+end
+function AutomationController:_fireReplay(reason)
+local data = collectDungeonData()
+if not data.dungeonName then return end
+local remotes = getRemotes()
+local replay = remotes:FindFirstChild("replayDungeon")
+if replay then
+pcall(function() replay:FireServer(data) end)
+notify({ Title = "Auto Retry", Description = reason .. " - replaying " .. tostring(data.dungeonName), Time = 4 })
+end
+end
+function AutomationController:_hookDeath()
+if self._diedConn then self._diedConn:Disconnect() self._diedConn = nil end
+local char = LocalPlayer.Character
+local hum = char and char:FindFirstChildOfClass("Humanoid")
+if not hum then return end
+self._diedConn = hum.Died:Connect(function()
+if workspace:FindFirstChild("dungeon") ~= nil and State.DeathAlerts then
+alertWebhook("Death", isHardcoreRun() and "Hardcore character died" or "Died in dungeon")
+end
+if not State.AutoRetry then return end
+if workspace:FindFirstChild("dungeon") == nil then return end
+if not isHardcoreRun() then return end
+if self._deathRetried then return end
+self._deathRetried = true
+task.wait(2)
+self:_fireReplay("Hardcore death")
+task.wait(3)
+self._deathRetried = false
+end)
+end
+function AutomationController:Start()
+self:Stop()
+self:_hookDeath()
+self._charConn = LocalPlayer.CharacterAdded:Connect(function()
+task.wait(0.3)
+self:_hookDeath()
+end)
+self._conn = RunService.Heartbeat:Connect(function()
+local now = os.clock()
+if now - (self._lastTick or 0) < 0.25 then return end
+self._lastTick = now
+if State.AutoStart then self:_tryStart() end
+if State.AutoRetry then self:_tryRetry() end
+if State.AutoNextTier then self:_tryNextTier() end
+end)
+end
+function AutomationController:Stop()
+if self._conn then self._conn:Disconnect() self._conn = nil end
+if self._diedConn then self._diedConn:Disconnect() self._diedConn = nil end
+if self._charConn then self._charConn:Disconnect() self._charConn = nil end
+self._deathRetried = false
+end
+function AutomationController:Refresh()
+if State.AutoStart or State.AutoRetry or State.AutoNextTier then
+self:Start()
+else
+self:Stop()
+end
+applyFeatures()
+end
+local function rejoinServer()
+pcall(function()
+game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+end)
+end
+local AutoRejoinController = { Enabled = false, _conns = {} }
+function AutoRejoinController:SetEnabled(on)
+self.Enabled = on
+for _, c in ipairs(self._conns) do pcall(function() c:Disconnect() end) end
+self._conns = {}
+if not on then return end
+local gc = game:GetService("GuiService")
+pcall(function()
+table.insert(self._conns, gc.ErrorMessageChanged:Connect(function(msg)
+if msg and msg ~= "" then
+alertWebhook("Disconnected", "Rejoining: " .. tostring(msg))
+task.wait(1)
+rejoinServer()
+end
+end))
+end)
+pcall(function()
+local tp = game:GetService("TeleportService")
+table.insert(self._conns, tp.TeleportInitFailed:Connect(function(_, result, msg)
+task.wait(2)
+rejoinServer()
+end))
+end)
+end
+local QueueController = { Enabled = false, _conn = nil, _last = 0 }
+function QueueController:SetEnabled(on)
+self.Enabled = on
+if self._conn then self._conn:Disconnect() self._conn = nil end
+if not on then return end
+self._conn = RunService.Heartbeat:Connect(function()
+if os.clock() - self._last < 2 then return end
+self._last = os.clock()
+for _, gui in ipairs({ "queueGui", "bossQueueGui" }) do
+local btn = findGuiButtonIn(gui, function(path)
+return path:find("selectoption") and path:find("joingame")
+end)
+if btn then clickButton(btn) return end
+end
+end)
+end
+local RewardController = { Enabled = false, _conn = nil, _last = 0 }
+function RewardController:SetEnabled(on)
+self.Enabled = on
+if self._conn then self._conn:Disconnect() self._conn = nil end
+if not on then return end
+self._conn = RunService.Heartbeat:Connect(function()
+if os.clock() - self._last < 3 then return end
+self._last = os.clock()
+local pg = LocalPlayer:FindFirstChild("PlayerGui")
+if not pg then return end
+for _, gui in ipairs(pg:GetChildren()) do
+if gui:IsA("ScreenGui") and gui.Enabled then
+local n = gui.Name:lower()
+if n:find("reward") or n:find("quest") or n:find("bonus") then
+local btn = findGuiButtonIn(gui.Name, function(path)
+return path:find("claim") or path:find("collect") or path:find("accept")
+end)
+if btn then clickButton(btn) return end
+end
+end
+end
+end)
+end
+local WatchdogController = { Enabled = false, _conn = nil, _lobbySince = nil }
+function WatchdogController:SetEnabled(on)
+self.Enabled = on
+if self._conn then self._conn:Disconnect() self._conn = nil end
+self._lobbySince = nil
+if not on then return end
+self._conn = RunService.Heartbeat:Connect(function()
+local now = os.clock()
+if now - (self._tick or 0) < 2 then return end
+self._tick = now
+local wantRunning = State.AutoStart or LobbyController.SmartPlay
+or LobbyController.AutoStartDungeon or BossRaidController.Auto
+if not wantRunning then self._lobbySince = nil return end
+local inDungeon = workspace:FindFirstChild("dungeon") ~= nil
+if inDungeon then
+self._lobbySince = nil
+return
+end
+if not self._lobbySince then self._lobbySince = now return end
+if now - self._lobbySince > 60 then
+self._lobbySince = now
+if BossRaidController.Auto then
+pcall(function() BossRaidController:RaidNow() end)
+elseif LobbyController.SmartPlay or LobbyController.AutoStartDungeon then
+pcall(function() LobbyController:PlayNow() end)
+elseif State.AutoStart then
+pcall(function() AutomationController:_tryStart() end)
+end
+alertWebhook("Watchdog", "Loop stalled in lobby - re-kicked")
+end
+end)
+end
+local AntiAFKController = { Enabled = false, _conn = nil }
+function AntiAFKController:SetEnabled(on)
+self.Enabled = on
+if self._conn then self._conn:Disconnect() self._conn = nil end
+if on then
+self._conn = LocalPlayer.Idled:Connect(function()
+pcall(function()
+local vu = game:GetService("VirtualUser")
+vu:CaptureController()
+vu:ClickButton2(Vector2.new())
+end)
+end)
+end
+end
+local BonusBossController = { Enabled = false, _conn = nil, _last = 0 }
+function BonusBossController:SetEnabled(on)
+self.Enabled = on
+if self._conn then self._conn:Disconnect() self._conn = nil end
+if on then
+self._conn = RunService.Heartbeat:Connect(function()
+if os.clock() - self._last < 2 then return end
+self._last = os.clock()
+local btn = findGuiButtonIn("bonusBossVotingGui", function(path)
+return path:find("accept")
+end)
+if btn then clickButton(btn) end
+end)
+end
+end
+local TradeDeclineController = { Enabled = false, _conn = nil, _last = 0 }
+function TradeDeclineController:SetEnabled(on)
+self.Enabled = on
+if self._conn then self._conn:Disconnect() self._conn = nil end
+if on then
+self._conn = RunService.Heartbeat:Connect(function()
+if os.clock() - self._last < 3 then return end
+self._last = os.clock()
+local btn = findGuiButtonIn("tradingGui", function(path)
+return path:find("decline") or path:find("deny")
+or path:find("cancelbutton") or path:find("xbutton")
+end)
+if btn then clickButton(btn) end
+end)
+end
+end
+local SkillPointsController = { Enabled = false, Stat = "physicalPower", _thread = nil }
+function SkillPointsController:SetEnabled(on)
+self.Enabled = on
+if self._thread then task.cancel(self._thread) self._thread = nil end
+if on then
+self._thread = task.spawn(function()
+while true do
+pcall(function()
+local pts = LocalPlayer:FindFirstChild("skillPoints")
+if pts and pts.Value > 0 then
+local remotes = getRemotes()
+local spend = remotes:FindFirstChild("spendSkillPoint")
+if spend then
+spend:FireServer(self.Stat, pts.Value)
+end
+end
+end)
+task.wait(5)
+end
+end)
+end
+end
+local LobbyController
+local StatsController = {
+SessionStart = os.time(),
+GoldStart = nil,
+Runs = 0,
+_conn = nil,
+_menuWasOpen = false,
+}
+function StatsController:GoldEarned()
+local ls = LocalPlayer:FindFirstChild("leaderstats")
+local g = ls and ls:FindFirstChild("Gold")
+local now = g and g.Value or 0
+if self.GoldStart == nil then self.GoldStart = now end
+local earned = now - self.GoldStart
+if earned < 0 then earned = 0 end
+return earned
+end
+function StatsController:GoldPerHour()
+local elapsed = os.time() - self.SessionStart
+if elapsed < 60 then return 0 end
+return math.floor(self:GoldEarned() / (elapsed / 3600))
+end
+function StatsController:Runtime()
+local s = math.floor(os.time() - self.SessionStart)
+return string.format("%dh %02dm", math.floor(s / 3600), math.floor((s % 3600) / 60))
+end
+function StatsController:UpdateXP()
+local ok, txt = pcall(function()
+local pg = LocalPlayer:FindFirstChild("PlayerGui")
+local lbl = pg and pg:FindFirstChild("currentXP", true)
+return lbl and lbl:IsA("TextLabel") and lbl.Text or nil
+end)
+if not ok or type(txt) ~= "string" then return end
+local cur = tonumber(txt:match("^([%d%.]+)"))
+if not cur then return end
+if self._lastXP == nil then
+self._lastXP = cur
+return
+end
+if cur > self._lastXP then
+self.XPAccum = (self.XPAccum or 0) + (cur - self._lastXP)
+elseif cur < self._lastXP then
+self.XPAccum = (self.XPAccum or 0) + cur
+end
+self._lastXP = cur
+end
+function StatsController:XPPerHour()
+local elapsed = os.time() - self.SessionStart
+if elapsed < 60 then return 0 end
+return math.floor((self.XPAccum or 0) / (elapsed / 3600))
+end
+function StatsController:Start()
+if self._conn then return end
+self.SessionStart = os.time()
+self:GoldEarned()
+self.PerDungeon = self.PerDungeon or {}
+self._runStart = nil
+self._runGold = nil
+self._runName = nil
+self._wasInDungeon = workspace:FindFirstChild("dungeon") ~= nil
+local persisted = loadPersist()
+local SESSION_GAP = 300
+local sameSession = persisted.SessionStart
+and (os.time() - persisted.SessionStart) < SESSION_GAP
+and (os.time() - (persisted.LastSeen or persisted.SessionStart)) < SESSION_GAP
+if sameSession then
+if persisted.Runs then self.Runs = persisted.Runs end
+if persisted.SessionStart then self.SessionStart = persisted.SessionStart end
+if type(persisted.PerDungeon) == "table" then self.PerDungeon = persisted.PerDungeon end
+else
+self.Runs = 0
+self.SessionStart = os.time()
+self.PerDungeon = {}
+end
+local function persist()
+local d = loadPersist()
+d.Runs = self.Runs
+d.SessionStart = self.SessionStart
+d.PerDungeon = self.PerDungeon
+d.LastSeen = os.time()
+savePersist(d)
+end
+persist()
+self._conn = RunService.Heartbeat:Connect(function()
+local nowT = os.time()
+if nowT - (self._lastSeenSave or 0) >= 10 then
+self._lastSeenSave = nowT
+pcall(function()
+local d = loadPersist()
+d.LastSeen = nowT
+d.SessionStart = self.SessionStart
+d.Runs = self.Runs
+savePersist(d)
+end)
+end
+local pg = LocalPlayer:FindFirstChild("PlayerGui")
+local menu = pg and pg:FindFirstChild("Menu")
+local finished = isDungeonFinished()
+local open = ((menu and menu:IsA("ScreenGui") and menu.Enabled) or false) or finished
+local inDungeon = workspace:FindFirstChild("dungeon") ~= nil
+if inDungeon and not self._runStart then
+self._runStart = os.clock()
+self._runGold = getLeaderstat("Gold")
+self._runWon = false
+local dn = workspace:FindFirstChild("dungeonName")
+self._runName = (dn and dn.Value) or "?"
+end
+if open and not self._menuWasOpen then
+self.Runs = self.Runs + 1
+self._runWon = true
+pcall(function() LobbyController:reportRunResult(true) end)
+persist()
+if self._runStart and self._runName then
+local secs = os.clock() - self._runStart
+local gold = getLeaderstat("Gold") - (self._runGold or 0)
+if secs > 5 and gold >= 0 then
+local rate = gold / (secs / 3600)
+local d = self.PerDungeon[self._runName] or { rate = 0, n = 0 }
+d.rate = (d.rate * d.n + rate) / (d.n + 1)
+d.n = d.n + 1
+self.PerDungeon[self._runName] = d
+end
+end
+self._runStart = nil
+end
+if self._wasInDungeon and not inDungeon then
+if self._runStart and not self._runWon then
+pcall(function() LobbyController:reportRunResult(false) end)
+end
+self._runStart = nil
+end
+if not inDungeon then self._runStart = nil end
+self._wasInDungeon = inDungeon
+self._menuWasOpen = open
+end)
+end
+local ReturnController = { _conn = nil, _diedConn = nil, _charConn = nil, _sent = false, _returnedThisRun = false }
+function ReturnController:_fireReturn(reason)
+if self._sent then return end
+self._sent = true
+notify({ Title = "Return to Lobby", Description = reason .. " - returning...", Time = 4 })
+task.wait(reason:find("clear") and 3 or 1)
+local remotes = getRemotes()
+local tele = remotes:FindFirstChild("ReturnToLobbyEvent")
+or remotes:FindFirstChild("teleToLobby")
+if tele then
+local ok, err = pcall(function() tele:FireServer() end)
+if not ok then
+notify({ Title = "Return to Lobby", Description = "Fire failed: " .. tostring(err), Time = 6 })
+end
+else
+notify({ Title = "Return to Lobby", Description = "return remote not found", Time = 6 })
+end
+task.wait(2)
+self._sent = false
+end
+function ReturnController:_hookCharacter(character)
+if self._diedConn then self._diedConn:Disconnect() self._diedConn = nil end
+local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+if not humanoid then return end
+self._diedConn = humanoid.Died:Connect(function()
+if workspace:FindFirstChild("dungeon") == nil then return end
+if not isHardcoreRun() then return end
+if State.AutoRetry and isHardcoreRun() then return end
+self:_fireReturn("Hardcore death")
+end)
+end
+function ReturnController:Start()
+self:Stop()
+self._sent = false
+self._returnedThisRun = false
+self:_hookCharacter(LocalPlayer.Character)
+self._charConn = LocalPlayer.CharacterAdded:Connect(function(char)
+task.wait(0.2)
+self:_hookCharacter(char)
+end)
+self._conn = RunService.Heartbeat:Connect(function()
+local finished = isDungeonFinished()
+if finished and not self._returnedThisRun then
+self._returnedThisRun = true
+if not (State.AutoRetry or State.AutoNextTier) then
+task.spawn(function() self:_fireReturn("Dungeon clear") end)
+end
+elseif not finished then
+self._returnedThisRun = false
+end
+end)
+end
+function ReturnController:Stop()
+if self._conn then self._conn:Disconnect() self._conn = nil end
+if self._diedConn then self._diedConn:Disconnect() self._diedConn = nil end
+if self._charConn then self._charConn:Disconnect() self._charConn = nil end
+self._sent = false
+self._returnedThisRun = false
+end
+function ReturnController:SetEnabled(on)
+if on then self:Start() else self:Stop() end
+end
+local RunLimitController = { Enabled = false, Limit = 10, _conn = nil, _finishedLatch = false }
+local function getPersistedRunLimit()
+local d = loadPersist()
+return tonumber(d.RunLimitCount) or 0
+end
+local function setPersistedRunLimit(n)
+local d = loadPersist()
+d.RunLimitCount = n
+savePersist(d)
+end
+function RunLimitController:SetEnabled(on)
+self.Enabled = on
+if self._conn then self._conn:Disconnect() self._conn = nil end
+self._finishedLatch = false
+if not on then
+setPersistedRunLimit(0)
+return
+end
+self._conn = RunService.Heartbeat:Connect(function()
+local finished = isDungeonFinished()
+if finished and not self._finishedLatch then
+self._finishedLatch = true
+local count = getPersistedRunLimit() + 1
+setPersistedRunLimit(count)
+notify({ Title = "Run Limit", Description = count .. "/" .. self.Limit .. " runs", Time = 3 })
+if count >= self.Limit then
+task.spawn(function()
+for _, id in ipairs({ "AutoRetry", "AutoNextTier", "SmartPlay",
+"AutoStartDungeon", "AutoBossRaid" }) do
+pcall(function() if Toggles[id] then Toggles[id]:SetValue(false) end end)
+end
+task.wait(3)
+local remotes = getRemotes()
+local tele = remotes:FindFirstChild("ReturnToLobbyEvent")
+or remotes:FindFirstChild("teleToLobby")
+if tele then pcall(function() tele:FireServer() end) end
+notify({ Title = "Run Limit", Description = "Reached " .. self.Limit .. " runs - returned to lobby", Time = 5 })
+setPersistedRunLimit(0)
+self.Enabled = false
+pcall(function() if Toggles.RunLimit then Toggles.RunLimit:SetValue(false) end end)
+end)
+end
+elseif not finished then
+self._finishedLatch = false
+end
+end)
+end
+LobbyController = {
+Difficulty = "Nightmare",
+Private = false,
+Hardcore = false,
+WaveDefence = false,
+SelectedDungeon = "Winter Outpost",
+ManualDifficulty = "Nightmare",
+SmartPlay = false,
+BestGold = false,
+AutoStartDungeon = false,
+_thread = nil,
+}
+LobbyController.SelectedDungeon = "Winter Outpost"
+LobbyController.Dungeons = {
+"Tutorial Dungeon", "Gilded Skies", "Winter Outpost",
+"Pirate Island", "King's Castle", "The Underworld", "Samurai Palace",
+"The Canals", "Steampunk Sewers", "Ghastly Harbor", "Orbital Outpost",
+"Volcanic Chambers", "Enchanted Forest", "Aquatic Temple",
+"Northern Lands", "Oni Dungeon", "Desert Temple", "Krampus",
+}
+local function getPlayerLevel()
+local ls = LocalPlayer:FindFirstChild("leaderstats")
+local lvl = ls and ls:FindFirstChild("Level")
+return (lvl and lvl.Value) or 0
+end
+local _statsCache = {}
+local function getDungeonStats(name)
+if _statsCache[name] ~= nil then
+return _statsCache[name] or nil
+end
+local remotes = getRemotes()
+local fn = remotes:FindFirstChild("getDungeonStats")
+if not fn then return nil end
+local ok, stats = pcall(function() return fn:InvokeServer(name) end)
+if ok and type(stats) == "table" then
+_statsCache[name] = stats
+return stats
+end
+_statsCache[name] = false
+return nil
+end
+local function getDungeonLevelReq(name, difficulty)
+local stats = getDungeonStats(name)
+if not stats then return nil end
+local diff = stats[difficulty]
+if type(diff) == "table" and diff.levelReq then
+return tonumber(diff.levelReq)
+end
+return nil
+end
+local DIFFICULTY_ORDER = { "Easy", "Medium", "Hard", "Insane", "Nightmare" }
+local function difficultyIndex(name)
+for i, d in ipairs(DIFFICULTY_ORDER) do
+if d == name then return i end
+end
+return #DIFFICULTY_ORDER
+end
+local function bestEntryForDungeon(name, ceilingIndex, myLevel)
+local chosenDiff, chosenReq = nil, -1
+for i = 1, ceilingIndex do
+local diff = DIFFICULTY_ORDER[i]
+local req = getDungeonLevelReq(name, diff)
+if req ~= nil and req <= myLevel and req > chosenReq then
+chosenReq = req
+chosenDiff = diff
+end
+end
+if chosenDiff then return chosenDiff, chosenReq end
+return nil, nil
+end
+function LobbyController:pickHighestDungeon()
+local myLevel = getPlayerLevel()
+local ceiling = difficultyIndex(self.Difficulty)
+local anyStats = false
+local skip = self._skip or {}
+if self.BestGold and StatsController.PerDungeon then
+local bestName, bestDiff, bestRate = nil, nil, -1
+for _, name in ipairs(self.Dungeons) do
+local d = StatsController.PerDungeon[name]
+if d and d.n > 0 and not skip[name] then
+local diff = bestEntryForDungeon(name, ceiling, myLevel)
+if diff and d.rate > bestRate then
+bestRate = d.rate
+bestName = name
+bestDiff = diff
+end
+end
+end
+if bestName then
+return bestName, bestDiff, (getDungeonLevelReq(bestName, bestDiff) or 0),
+("best gold/hr: " .. bestName .. " on " .. bestDiff ..
+" (~" .. abbreviateNumber(bestRate) .. "/hr)")
+end
+end
+local best, bestDiff, bestReq = nil, nil, -1
+for _, name in ipairs(self.Dungeons) do
+if not skip[name] then
+for i = 1, #DIFFICULTY_ORDER do
+if getDungeonLevelReq(name, DIFFICULTY_ORDER[i]) ~= nil then
+anyStats = true; break
+end
+end
+local diff, req = bestEntryForDungeon(name, ceiling, myLevel)
+if diff and req > bestReq then
+bestReq = req
+bestDiff = diff
+best = name
+end
+end
+end
+if best then
+return best, bestDiff, bestReq,
+("highest you qualify for: " .. best .. " on " .. bestDiff ..
+" (req " .. bestReq .. ", you " .. myLevel .. ")")
+end
+if not anyStats then
+return nil, nil, nil, "no dungeon stats returned (getDungeonStats failed)"
+end
+return nil, nil, nil, "nothing within your level at or below " .. self.Difficulty
+end
+function LobbyController:startDungeon(name, difficulty)
+difficulty = difficulty or self.Difficulty
+local remotes = getRemotes()
+local createLobby = remotes:FindFirstChild("createLobby")
+local startDungeon = remotes:FindFirstChild("startDungeon")
+if not createLobby then return false end
+local levelReq = getDungeonLevelReq(name, difficulty) or 0
+notify({ Title = "Start Dungeon", Description = tostring(name) .. " | " .. tostring(difficulty) .. " | req " .. tostring(levelReq), Time = 4 })
+local created = false
+pcall(function()
+created = createLobby:InvokeServer(
+name, difficulty, levelReq,
+self.Hardcore, self.Private, self.WaveDefence
+) == true
+end)
+if created and startDungeon then
+task.wait(0.5)
+pcall(function() startDungeon:FireServer() end)
+end
+return created
+end
+function LobbyController:_demote()
+self._fails = 0
+if self.Hardcore then
+self.Hardcore = false
+pcall(function() if Toggles.Hardcore then Toggles.Hardcore:SetValue(false) end end)
+notify({ Title = "Smart Play", Description = "Too many fails - turned off Hardcore", Time = 5 })
+return
+end
+local idx = difficultyIndex(self.Difficulty)
+if idx > 1 then
+self.Difficulty = DIFFICULTY_ORDER[idx - 1]
+pcall(function() if Options.Difficulty then Options.Difficulty:SetValue(self.Difficulty) end end)
+notify({ Title = "Smart Play", Description = "Dropped difficulty to " .. self.Difficulty, Time = 5 })
+return
+end
+self._skip = self._skip or {}
+if self.LastPick then
+self._skip[self.LastPick] = true
+notify({ Title = "Smart Play", Description = "Skipping " .. self.LastPick .. " - too hard", Time = 5 })
+end
+end
+function LobbyController:reportRunResult(won)
+if not self.SmartPlay then return end
+if won then
+self._fails = 0
+else
+self._fails = (self._fails or 0) + 1
+if self._fails >= (self.FailLimit or 3) then
+self:_demote()
+end
+end
+end
+function LobbyController:PlayNow()
+if self.SmartPlay then
+local name, diff, req, reason = self:pickHighestDungeon()
+if not name then
+notify({ Title = "Smart Play", Description = tostring(reason), Time = 6 })
+return nil
+end
+self.LastPick = name
+self.LastReason = reason
+self:startDungeon(name, diff)
+return name, diff
+else
+local diff = self.ManualDifficulty or self.Difficulty
+self:startDungeon(self.SelectedDungeon, diff)
+return self.SelectedDungeon, diff
+end
+end
+local SELL_DEBUG = "?"
+local SellController = {
+Enabled = false,
+MaxRarity = "rare",
+_conn = nil,
+}
+local RARITY_ORDER = { "common", "uncommon", "rare", "epic", "legendary", "ultimate" }
+local function rarityRank(name)
+if type(name) ~= "string" then return 999 end
+local n = name:lower()
+for i, r in ipairs(RARITY_ORDER) do
+if r == n then return i end
+end
+return 999
+end
+local function isUnequipped(item)
+local eq = item.equipped
+if eq == nil then return true end
+if type(eq) == "table" then
+return (eq.q ~= true) and (eq.e ~= true)
+end
+return eq == false
+end
+local function buildSellPayload(maxRank)
+local remotes = getRemotes()
+local storage
+local invFn = remotes:FindFirstChild("reloadInvy")
+if invFn then
+local ok, res = pcall(function() return invFn:InvokeServer() end)
+if ok and type(res) == "table" then storage = res end
+end
+if not storage then
+local fn = remotes:FindFirstChild("getPlayerStorage")
+if fn then
+local ok, res = pcall(function() return fn:InvokeServer() end)
+if ok and type(res) == "table" then storage = res end
+end
+end
+if type(storage) ~= "table" then return nil, "inventory unavailable" end
+local payload = { weapon = {}, ability = {}, chest = {}, helmet = {} }
+local buckets = {
+weapons   = { t = "weapon",  numStart = 8 },
+abilities = { t = "ability", numStart = 9 },
+chests    = { t = "chest",   numStart = 7 },
+helmets   = { t = "helmet",  numStart = 8 },
+}
+local count, totalSeen, bucketsFound = 0, 0, 0
+for bucketName, info in pairs(buckets) do
+local bucket = storage[bucketName]
+if type(bucket) == "table" then
+bucketsFound = bucketsFound + 1
+for key, item in pairs(bucket) do
+if type(item) == "table" then
+totalSeen = totalSeen + 1
+local rank = rarityRank(item.rarity)
+if isUnequipped(item) and rank <= maxRank then
+local num = tonumber(item.uniqueItemNum)
+or tonumber(tostring(key):match("(%d+)$"))
+or tonumber(tostring(key):sub(info.numStart))
+if num then
+table.insert(payload[info.t], num)
+count = count + 1
+end
+end
+end
+end
+end
+end
+SELL_DEBUG = string.format("buckets:%d items:%d match:%d", bucketsFound, totalSeen, count)
+return payload, count
+end
+function SellController:SellOnce()
+local bt = LocalPlayer:FindFirstChild("busyTrading")
+if bt and bt.Value == true then
+return 0, "busy trading"
+end
+local maxRank = rarityRank(self.MaxRarity)
+local payload, countOrErr = buildSellPayload(maxRank)
+if not payload then return 0, countOrErr end
+if countOrErr == 0 then return 0, "no items at/below " .. self.MaxRarity end
+local remotes = getRemotes()
+local sell = remotes:FindFirstChild("sellItemEvent")
+if not sell then return 0, "sellItemEvent missing" end
+local ok, err = pcall(function() sell:FireServer(payload) end)
+if not ok then return 0, "fire failed: " .. tostring(err) end
+return countOrErr
+end
+function SellController:Start()
+self:Stop()
+self._conn = task.spawn(function()
+while true do
+if workspace:FindFirstChild("dungeon") == nil then
+local sold, err = self:SellOnce()
+if (not sold or sold == 0) and err and not tostring(err):find("no items") then
+notify({ Title = "Auto Sell", Description = tostring(err), Time = 5 })
+end
+end
+task.wait(6)
+end
+end)
+end
+function SellController:Stop()
+if self._conn then task.cancel(self._conn); self._conn = nil end
+end
+function SellController:SetEnabled(on)
+self.Enabled = on
+if on then self:Start() else self:Stop() end
+end
+local CombatBox = Tabs.Main:AddLeftGroupbox("Combat")
+CombatBox:AddToggle("FloatAboveMobs", {
+Text = "Float Above Mobs",
+Default = false,
+Callback = function(v)
+State.FloatAboveMobs = v
+applyFeatures()
+end,
+})
+CombatBox:AddSlider("HoverHeight", {
+Text = "Hover Height",
+Default = 10, Min = 3, Max = 50, Rounding = 1,
+Suffix = " studs",
+Callback = function(v)
+FloatController.Height = v
+end,
+})
+CombatBox:AddToggle("FloatBelow", {
+Text = "Float Below",
+Default = false,
+Callback = function(v)
+FloatController.Below = v
+end,
+})
+CombatBox:AddSlider("DodgeRange", {
+Text = "Dodge Range",
+Default = 60, Min = 10, Max = 150, Rounding = 0,
+Suffix = " studs",
+Callback = function(v)
+FloatController.DodgeRange = v
+end,
+})
+CombatBox:AddDivider()
+CombatBox:AddToggle("StallKill", {
+Text = "Stall",
+Default = false,
+Callback = function(v)
+StallController:SetEnabled(v)
+end,
+})
+CombatBox:AddDivider()
+CombatBox:AddToggle("AutoClick", {
+Text = "Click M1",
+Default = false,
+Callback = function(v)
+State.AutoClick = v
+applyFeatures()
+end,
+})
+CombatBox:AddSlider("ClickSpeed", {
+Text = "Click Speed",
+Default = 0.5, Min = 0.1, Max = 3, Rounding = 1,
+Suffix = "s",
+Callback = function(v)
+ClickController.Interval = v
+end,
+})
+local KeysBox = Tabs.Main:AddRightGroupbox("Keybinds")
+KeysBox:AddToggle("PressQ", {
+Text = "Spam Q",
+Default = false,
+Callback = function(v)
+State.PressQ = v
+applyFeatures()
+end,
+})
+KeysBox:AddToggle("PressE", {
+Text = "Spam E",
+Default = false,
+Callback = function(v)
+State.PressE = v
+applyFeatures()
+end,
+})
+KeysBox:AddSlider("KeySpeed", {
+Text = "Key Speed",
+Default = 0.5, Min = 0.1, Max = 3, Rounding = 1,
+Suffix = "s",
+Callback = function(v)
+KeyController.Interval = v
+end,
+})
+KeysBox:AddToggle("KeyOnlyInRange", {
+Text = "Range Spam",
+Default = false,
+Callback = function(v)
+KeyController.OnlyInRange = v
+end,
+})
+KeysBox:AddSlider("KeyRange", {
+Text = "Spam Range",
+Default = 30, Min = 5, Max = 100, Rounding = 0,
+Suffix = " studs",
+Callback = function(v)
+KeyController.Range = v
+end,
+})
+local AutoBox = Tabs.Main:AddRightGroupbox("Automation")
+AutoBox:AddToggle("AutoStart", {
+Text = "Auto Start",
+Default = false,
+Callback = function(v)
+State.AutoStart = v
+AutomationController:Refresh()
+if v then
+notify({ Title = "Auto Start", Description = "On - auto-clicks START in the lobby.", Time = 4 })
+end
+end,
+})
+AutoBox:AddToggle("AutoRetry", {
+Text = "Auto Retry",
+Default = false,
+Callback = function(v)
+State.AutoRetry = v
+if v and State.AutoNextTier then
+State.AutoNextTier = false
+pcall(function() Toggles.AutoNextTier:SetValue(false) end)
+end
+AutomationController:Refresh()
+if v then
+notify({ Title = "Auto Retry", Description = "On - auto-clicks Replay after a clear.", Time = 4 })
+end
+end,
+})
+AutoBox:AddToggle("AutoNextTier", {
+Text = "Auto Next Tier",
+Default = false,
+Callback = function(v)
+State.AutoNextTier = v
+if v and State.AutoRetry then
+State.AutoRetry = false
+pcall(function() Toggles.AutoRetry:SetValue(false) end)
+end
+AutomationController:Refresh()
+if v then
+notify({ Title = "Next Tier", Description = "On - climbs to the next tier after a clear.", Time = 4 })
+end
+end,
+})
+AutoBox:AddToggle("ReturnToLobby", {
+Text = "Return to Lobby",
+Default = false,
+Callback = function(v)
+State.ReturnToLobby = v
+ReturnController:SetEnabled(v)
+if v then
+notify({ Title = "Return to Lobby", Description = "On - returns on dungeon clear, and on hardcore death.", Time = 4 })
+end
+end,
+})
+AutoBox:AddToggle("RunLimit", {
+Text = "Return After X Runs",
+Default = false,
+Callback = function(v)
+RunLimitController:SetEnabled(v)
+if v then
+notify({ Title = "Run Limit", Description = "Will return to lobby after " .. RunLimitController.Limit .. " runs.", Time = 4 })
+end
+end,
+})
+AutoBox:AddInput("RunLimitCount", {
+Text = "Run Count",
+Default = "10",
+Numeric = true,
+Finished = true,
+Callback = function(v)
+local n = tonumber(v)
+if n and n > 0 then RunLimitController.Limit = math.floor(n) end
+end,
+})
+local MoveBox = Tabs.Main:AddLeftGroupbox("Movement")
+local WalkSpeed = { Enabled = false, Value = 60, _conn = nil }
+function WalkSpeed:Start()
+self:Stop()
+self._conn = RunService.Heartbeat:Connect(function()
+if not self.Enabled then return end
+local character = LocalPlayer.Character
+local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+if humanoid and humanoid.WalkSpeed ~= self.Value then
+humanoid.WalkSpeed = self.Value
+end
+end)
+end
+function WalkSpeed:Apply()
+local character = LocalPlayer.Character
+local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+if humanoid and self.Enabled then
+humanoid.WalkSpeed = self.Value
+end
+end
+function WalkSpeed:Stop()
+if self._conn then self._conn:Disconnect() self._conn = nil end
+local character = LocalPlayer.Character
+local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+if humanoid then humanoid.WalkSpeed = 16 end
+end
+function WalkSpeed:SetEnabled(on)
+self.Enabled = on
+if on then self:Start() else self:Stop() end
+end
+MoveBox:AddToggle("WalkSpeedEnabled", {
+Text = "Walk Speed",
+Default = false,
+Callback = function(v)
+WalkSpeed:SetEnabled(v)
+end,
+}):AddKeyPicker("SpeedKey", { Default = "", SyncToggleState = true, Mode = "Toggle", Text = "Walk Speed" })
+MoveBox:AddSlider("WalkSpeedValue", {
+Text = "Speed",
+Default = 60, Min = 16, Max = 250, Rounding = 0,
+Callback = function(v)
+WalkSpeed.Value = v
+WalkSpeed:Apply()
+end,
+})
+StatsController:Start()
+task.spawn(function()
+while true do
+pcall(function() StatsController:UpdateXP() end)
+task.wait(1)
+end
+end)
+local InfoBox = Tabs.Main:AddLeftGroupbox("Actions")
+InfoBox:AddButton({
+Text = "Rejoin Server",
+Func = function()
+pcall(function()
+game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+end)
+end,
+})
+local performUnload
+InfoBox:AddButton({
+Text = "Unload",
+Func = function()
+if performUnload then performUnload() else Library:Unload() end
+end,
+Risky = true,
+})
+local BossRaidController = { Tier = 1, Private = true, Auto = false, _thread = nil }
+function BossRaidController:RaidNow()
+local remotes = getRemotes()
+local create = remotes:FindFirstChild("createBossLobby")
+local start = remotes:FindFirstChild("startBossRaid")
+if not create then return false, "createBossLobby missing" end
+local created = false
+pcall(function()
+created = create:InvokeServer(self.Tier, self.Private, 1) == true
+end)
+if created and start then
+task.wait(0.5)
+pcall(function() start:FireServer() end)
+end
+return created
+end
+function BossRaidController:Refresh()
+if self._thread then task.cancel(self._thread) self._thread = nil end
+if not self.Auto then return end
+self._thread = task.spawn(function()
+while true do
+if workspace:FindFirstChild("dungeon") == nil then
+pcall(function() self:RaidNow() end)
+end
+task.wait(5)
+end
+end)
+end
+local EquipController = { Enabled = false, Build = "physical", _thread = nil }
+local function rawStat(item, itemType, build)
+if itemType == "weapon" then
+if build == "mage" then
+return tonumber(item.spellPower) or tonumber(item.spellDamage)
+or tonumber(item.physicalDamage) or tonumber(item.damage) or 0
+end
+return tonumber(item.physicalDamage) or tonumber(item.damage)
+or tonumber(item.spellPower) or 0
+end
+local d = tonumber(item.defence) or 0
+local h = tonumber(item.health) or 0
+local extra = 0
+if build == "mage" then
+extra = tonumber(item.spellPower) or 0
+else
+extra = tonumber(item.physicalDamage) or 0
+end
+return d + h * 0.5 + extra
+end
+local RARITY_MULT = {
+common = 1, uncommon = 1.15, rare = 1.35, epic = 1.6,
+legendary = 2, ultimate = 2.5,
+}
+local function projectedMaxPower(item, itemType, build)
+local base = rawStat(item, itemType, build)
+if base <= 0 then return 0 end
+local cur = tonumber(item.currentUpgrade) or 0
+local max = tonumber(item.maxUpgrades) or 0
+local perLevel = 0.08
+local projected
+if max > 0 and cur >= 0 then
+local baseAtZero = base / (1 + cur * perLevel)
+projected = baseAtZero * (1 + max * perLevel)
+else
+projected = base
+end
+local rar = item.rarity and tostring(item.rarity):lower() or ""
+projected = projected * (RARITY_MULT[rar] or 1)
+return projected
+end
+function EquipController:EquipBestOnce()
+local remotes = getRemotes()
+local invFn = remotes:FindFirstChild("reloadInvy")
+local equip = remotes:FindFirstChild("equipItem")
+if not invFn or not equip then return end
+local ok, inv = pcall(function() return invFn:InvokeServer() end)
+if not ok or type(inv) ~= "table" then return end
+local buckets = { weapons = "weapon", chests = "chest", helmets = "helmet" }
+for bucketName, itemType in pairs(buckets) do
+local bucket = inv[bucketName]
+if type(bucket) == "table" then
+local best, bestPow, equippedNum, equippedPow = nil, -1, nil, 0
+for _, item in pairs(bucket) do
+if type(item) == "table" then
+local pow = projectedMaxPower(item, itemType, self.Build)
+if item.equipped == true then
+equippedNum = tonumber(item.uniqueItemNum)
+equippedPow = pow
+end
+if pow > bestPow then
+bestPow = pow
+best = tonumber(item.uniqueItemNum)
+end
+end
+end
+if best and best ~= equippedNum and bestPow > equippedPow * 1.02 then
+pcall(function() equip:InvokeServer(itemType, best) end)
+task.wait(0.3)
+end
+end
+end
+end
+function EquipController:SetEnabled(on)
+self.Enabled = on
+if self._thread then task.cancel(self._thread) self._thread = nil end
+if on then
+self._thread = task.spawn(function()
+while true do
+if workspace:FindFirstChild("dungeon") == nil then
+pcall(function() self:EquipBestOnce() end)
+end
+task.wait(20)
+end
+end)
+end
+end
+local UpgradeController = { Enabled = false, MaxSpend = 100000, Build = "physical", _thread = nil }
+function UpgradeController:UpgradeOnce()
+local remotes = getRemotes()
+local invFn = remotes:FindFirstChild("reloadInvy")
+local upgrade = remotes:FindFirstChild("upgradeItem")
+if not invFn or not upgrade then return end
+local ok, inv = pcall(function() return invFn:InvokeServer() end)
+if not ok or type(inv) ~= "table" then return end
+local gold = getLeaderstat("Gold")
+local buckets = { weapons = "weapon", chests = "chest", helmets = "helmet" }
+for bucketName, itemType in pairs(buckets) do
+local bucket = inv[bucketName]
+if type(bucket) == "table" then
+for _, item in pairs(bucket) do
+if type(item) == "table" and item.equipped == true then
+local cur = tonumber(item.currentUpgrade) or 0
+local max = tonumber(item.maxUpgrades) or 0
+if max > 0 and cur < max then
+local stat
+if itemType == "weapon" then
+stat = (self.Build == "mage") and "spell" or "physical"
+else
+stat = "health"
+end
+local num = tonumber(item.uniqueItemNum)
+pcall(function()
+upgrade:FireServer(item.itemType or itemType, num, stat, 1, nil)
+end)
+return true
+end
+end
+end
+end
+end
+return false
+end
+function UpgradeController:SetEnabled(on)
+self.Enabled = on
+if self._thread then task.cancel(self._thread) self._thread = nil end
+if on then
+self._thread = task.spawn(function()
+local spent = 0
+local startGold = getLeaderstat("Gold")
+while true do
+if workspace:FindFirstChild("dungeon") == nil then
+local before = getLeaderstat("Gold")
+local did = false
+pcall(function() did = self:UpgradeOnce() end)
+task.wait(0.6)
+local after = getLeaderstat("Gold")
+local cost = before - after
+if cost > 0 then spent = spent + cost end
+if spent >= self.MaxSpend then
+notify({ Title = "Auto Upgrade", Description = "Spend cap reached (" .. abbreviateNumber(spent) .. ")", Time = 5 })
+self.Enabled = false
+pcall(function() if Toggles.AutoUpgrade then Toggles.AutoUpgrade:SetValue(false) end end)
+break
+end
+if not did then task.wait(5) end
+else
+task.wait(3)
+end
+end
+end)
+end
+end
+local PlayBox = Tabs.Lobby:AddLeftGroupbox("Play")
+PlayBox:AddDropdown("Difficulty", {
+Values = { "Easy", "Medium", "Hard", "Insane", "Nightmare" },
+Default = 5,
+Text = "Max Difficulty",
+Callback = function(v)
+LobbyController.Difficulty = v
+end,
+})
+PlayBox:AddToggle("PrivateServer", {
+Text = "Private",
+Default = false,
+Callback = function(v)
+LobbyController.Private = v
+end,
+})
+PlayBox:AddToggle("Hardcore", {
+Text = "Hardcore",
+Default = false,
+Callback = function(v)
+LobbyController.Hardcore = v
+end,
+})
+PlayBox:AddToggle("WaveDefence", {
+Text = "Wave Defence",
+Default = false,
+Callback = function(v)
+LobbyController.WaveDefence = v
+end,
+})
+PlayBox:AddDivider()
+PlayBox:AddToggle("SmartPlay", {
+Text = "Smart Play",
+Default = false,
+Callback = function(v)
+LobbyController.SmartPlay = v
+if v and LobbyController.AutoStartDungeon then
+LobbyController.AutoStartDungeon = false
+pcall(function() Toggles.AutoStartDungeon:SetValue(false) end)
+end
+LobbyController:Refresh()
+end,
+})
+PlayBox:AddToggle("BestGold", {
+Text = "Pick Best Gold/hr",
+Default = false,
+Callback = function(v)
+LobbyController.BestGold = v
+end,
+})
+PlayBox:AddInput("FailLimit", {
+Text = "Demote after fails",
+Default = "3",
+Numeric = true,
+Finished = true,
+Callback = function(v)
+local n = tonumber(v)
+if n and n > 0 then LobbyController.FailLimit = math.floor(n) end
+end,
+})
+local ManualBox = Tabs.Lobby:AddRightGroupbox("Manual / Auto Start")
+ManualBox:AddDropdown("SelectedDungeon", {
+Values = LobbyController.Dungeons,
+Default = 3,
+Text = "Dungeon",
+Callback = function(v)
+LobbyController.SelectedDungeon = v
+end,
+})
+ManualBox:AddDropdown("ManualDifficulty", {
+Values = { "Easy", "Medium", "Hard", "Insane", "Nightmare" },
+Default = 5,
+Text = "Difficulty",
+Callback = function(v)
+LobbyController.ManualDifficulty = v
+end,
+})
+ManualBox:AddToggle("AutoStartDungeon", {
+Text = "Auto Start Selected Dungeon",
+Default = false,
+Callback = function(v)
+LobbyController.AutoStartDungeon = v
+if v and LobbyController.SmartPlay then
+LobbyController.SmartPlay = false
+pcall(function() Toggles.SmartPlay:SetValue(false) end)
+end
+LobbyController:Refresh()
+end,
+})
+ManualBox:AddButton({
+Text = "Play Now",
+Func = function()
+local name = LobbyController:PlayNow()
+if name then
+notify({ Title = "Dexori", Description = "Starting: " .. tostring(name), Time = 4 })
+end
+end,
+})
+ManualBox:AddButton({
+Text = "Test Smart Pick",
+Func = function()
+local name, diff, req, reason = LobbyController:pickHighestDungeon()
+if name then
+notify({ Title = "Smart Pick", Description = name .. " - " .. tostring(diff) .. " (" .. tostring(reason) .. ")", Time = 6 })
+else
+notify({ Title = "Smart Pick", Description = tostring(reason), Time = 6 })
+end
+end,
+})
+local SellBox = Tabs.Lobby:AddLeftGroupbox("Auto Sell")
+SellBox:AddDropdown("SellRarity", {
+Values = { "common", "uncommon", "rare", "epic", "legendary", "ultimate" },
+Default = 3,
+Text = "Sell this rarity and under",
+Callback = function(v)
+SellController.MaxRarity = v
+end,
+})
+SellBox:AddToggle("AutoSell", {
+Text = "Auto Sell",
+Default = false,
+Callback = function(v)
+SellController:SetEnabled(v)
+if v then
+notify({ Title = "Auto Sell", Description = "Armed - sells in the lobby every few seconds.", Time = 4 })
+end
+end,
+})
+SellBox:AddButton({
+Text = "Sell Now",
+Func = function()
+local sold, err = SellController:SellOnce()
+if sold and sold > 0 then
+notify({ Title = "Auto Sell", Description = "Sold " .. sold .. " item(s)  [" .. tostring(SELL_DEBUG) .. "]", Time = 5 })
+else
+notify({ Title = "Auto Sell", Description = tostring(err or "nothing to sell") .. "  [" .. tostring(SELL_DEBUG) .. "]", Time = 6 })
+end
+end,
+})
+SellBox:AddDivider()
+SellBox:AddToggle("AutoEquipBest", {
+Text = "Auto Equip Best Gear",
+Default = false,
+Callback = function(v)
+EquipController:SetEnabled(v)
+end,
+})
+SellBox:AddDropdown("EquipBuild", {
+Text = "Weapon Build",
+Values = { "physical", "mage" },
+Default = 1,
+Callback = function(v)
+EquipController.Build = v
+UpgradeController.Build = v
+end,
+})
+SellBox:AddDivider()
+SellBox:AddToggle("AutoUpgrade", {
+Text = "Auto Upgrade Equipped",
+Default = false,
+Callback = function(v)
+UpgradeController:SetEnabled(v)
+if v then
+notify({ Title = "Auto Upgrade", Description = "Upgrading equipped gear up to spend cap.", Time = 4 })
+end
+end,
+})
+SellBox:AddInput("UpgradeMaxSpend", {
+Text = "Max Spend",
+Default = "100000",
+Numeric = true,
+Finished = true,
+Callback = function(v)
+local n = tonumber(v)
+if n and n > 0 then UpgradeController.MaxSpend = math.floor(n) end
+end,
+})
+local BossBox = Tabs.Lobby:AddRightGroupbox("Boss Raid")
+BossBox:AddSlider("BossTier", {
+Text = "Tier",
+Default = 1, Min = 1, Max = 100, Rounding = 0,
+Callback = function(v)
+BossRaidController.Tier = v
+end,
+})
+BossBox:AddToggle("BossPrivate", {
+Text = "Private",
+Default = true,
+Callback = function(v)
+BossRaidController.Private = v
+end,
+})
+BossBox:AddToggle("AutoBossRaid", {
+Text = "Auto Boss Raid",
+Default = false,
+Callback = function(v)
+BossRaidController.Auto = v
+BossRaidController:Refresh()
+if v then
+for _, other in ipairs({ "SmartPlay", "AutoStartDungeon" }) do
+pcall(function() Toggles[other]:SetValue(false) end)
+end
+end
+end,
+})
+BossBox:AddButton({
+Text = "Raid Now",
+Func = function()
+local ok, err = BossRaidController:RaidNow()
+if ok then
+notify({ Title = "Boss Raid", Description = "Raid created (tier " .. BossRaidController.Tier .. ")", Time = 4 })
+else
+notify({ Title = "Boss Raid", Description = tostring(err or "create failed"), Time = 5 })
+end
+end,
+})
+function LobbyController:Refresh()
+if self._thread then task.cancel(self._thread); self._thread = nil end
+if not (self.SmartPlay or self.AutoStartDungeon) then return end
+self._thread = task.spawn(function()
+while true do
+local inLobby = workspace:FindFirstChild("dungeon") == nil
+if inLobby then
+pcall(function() self:PlayNow() end)
+end
+task.wait(5)
+end
+end)
+end
+local WebhookController = {
+Url = FORCED_WEBHOOK_URL,
+Enabled = true,
+PingRares = true,
+_conn = nil,
+_loot = {},
+_lootHook = nil,
+_wasInDungeon = false,
+_goldAtStart = nil,
+_gemsAtStart = nil,
+}
+local function getCurrentDungeonName()
+local dn = workspace:FindFirstChild("dungeonName")
+if dn and dn:IsA("StringValue") and dn.Value ~= "" then
+return dn.Value
+end
+return "Unknown"
+end
+local function getXPText()
+local ok, txt = pcall(function()
+local pg = LocalPlayer:FindFirstChild("PlayerGui")
+if pg then
+local lbl = pg:FindFirstChild("currentXP", true)
+if lbl and lbl:IsA("TextLabel") then return lbl.Text end
+end
+return nil
+end)
+return (ok and txt) or nil
+end
+local function rarityFromKey(key)
+if type(key) ~= "string" then return "" end
+local k = key:lower()
+for _, r in ipairs({ "common", "uncommon", "rare", "epic", "legendary", "ultimate" }) do
+if k:find(r) then return r end
+end
+return key
+end
+local function lookupItemName(itemType, uniqueNum)
+local ok, storage = pcall(function()
+local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("remotes")
+local fn = remotes and (remotes:FindFirstChild("reloadInvy")
+or remotes:FindFirstChild("getPlayerStorage"))
+return fn and fn:InvokeServer()
+end)
+if not ok or type(storage) ~= "table" then return nil end
+local bucketByType = {
+weapon = "weapons", ability = "abilities", chest = "chests", helmet = "helmets",
+}
+local bucket = storage[bucketByType[itemType] or ""]
+if type(bucket) == "table" then
+for _, item in pairs(bucket) do
+if type(item) == "table"
+and tonumber(item.uniqueItemNum) == tonumber(uniqueNum) then
+return item.name
+end
+end
+end
+return nil
+end
+function WebhookController:startLootHook()
+if self._lootHook then return end
+local ok, remotes = pcall(function()
+return game:GetService("ReplicatedStorage"):FindFirstChild("remotes")
+end)
+local fn = ok and remotes and remotes:FindFirstChild("addItemToInvy")
+if not fn then return end
+self._lootHook = true
+local this = self
+local function record(itemType, uniqueNum, rarityKey)
+pcall(function()
+local name = lookupItemName(itemType, uniqueNum) or tostring(itemType)
+local rar = rarityFromKey(rarityKey)
+this._loot[#this._loot + 1] = { name = name, rarity = rar }
+if this.PingRares and (rar == "legendary" or rar == "ultimate") then
+task.spawn(function()
+local url = this:getUrl()
+if url == "" then return end
+local body = game:GetService("HttpService"):JSONEncode({
+username = "Dexori",
+embeds = { {
+title = "Rare Drop!",
+description = ("**%s** (%s)"):format(name, rar),
+color = 16766720,
+footer = { text = "Ryoichi is king glaze me" },
+} },
+})
+httpRequest({
+Url = url,
+Method = "POST",
+Headers = { ["Content-Type"] = "application/json" },
+Body = body,
+})
+end)
+end
+end)
+end
+local hooked = false
+local original
+pcall(function()
+if type(getcallbackvalue) == "function" then
+original = getcallbackvalue(fn, "OnClientInvoke")
+end
+end)
+local okSet = pcall(function()
+fn.OnClientInvoke = function(itemType, uniqueNum, imageId, rarityKey)
+record(itemType, uniqueNum, rarityKey)
+if type(original) == "function" then
+return original(itemType, uniqueNum, imageId, rarityKey)
+end
+end
+end)
+if okSet then hooked = true end
+if not hooked and type(hookmetamethod) == "function" and type(newcclosure) == "function" then
+pcall(function()
+local old
+old = hookmetamethod(game, "__namecall", newcclosure(function(self2, ...)
+local method = getnamecallmethod and getnamecallmethod() or ""
+if self2 == fn and (method == "InvokeClient" or method == "OnClientInvoke") then
+local args = { ... }
+record(args[1], args[2], args[4])
+end
+return old(self2, ...)
+end))
+hooked = true
+end)
+end
+if not hooked then
+self._lootHook = nil
+end
+end
+local function snapshotInventory()
+local ids = {}
+pcall(function()
+local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("remotes")
+local fn = remotes and remotes:FindFirstChild("reloadInvy")
+local inv = fn and fn:InvokeServer()
+if type(inv) ~= "table" then return end
+for bucketName, itemType in pairs({ weapons = "weapon", abilities = "ability",
+chests = "chest", helmets = "helmet" }) do
+local bucket = inv[bucketName]
+if type(bucket) == "table" then
+for key, item in pairs(bucket) do
+if type(item) == "table" then
+local uid = itemType .. ":" .. tostring(key)
+ids[uid] = {
+name = item.name or itemType,
+rarity = (item.rarity and tostring(item.rarity):lower()) or "",
+}
+end
+end
+end
+end
+end)
+return ids
+end
+function WebhookController:resetRun()
+self._loot = {}
+self._goldAtStart = getLeaderstat("Gold")
+self._gemsAtStart = getLeaderstat("Gems")
+self._invStart = snapshotInventory()
+end
+function WebhookController:diffLoot()
+if type(self._invStart) ~= "table" then return {} end
+local now = snapshotInventory()
+local gained = {}
+for id, info in pairs(now) do
+if not self._invStart[id] then
+gained[#gained + 1] = info
+end
+end
+return gained
+end
+function WebhookController:getUrl()
+return FORCED_WEBHOOK_URL
+end
+function WebhookController:sendSummary()
+local url = self:getUrl()
+if url == "" then return false, "no url" end
+local function safe(v)
+v = tostring(v)
+if v == nil or v == "" then return "-" end
+return v
+end
+local totalGold = getLeaderstat("Gold")
+local goldEarned = self._goldAtStart and (totalGold - self._goldAtStart) or 0
+if goldEarned < 0 then goldEarned = 0 end
+local totalGems = getLeaderstat("Gems")
+local gemsEarned = self._gemsAtStart and (totalGems - self._gemsAtStart) or 0
+if gemsEarned < 0 then gemsEarned = 0 end
+local fields = {
+{ name = "Gold Earned", value = safe("+" .. abbreviateNumber(goldEarned)), inline = true },
+{ name = "Gems Earned", value = safe("+" .. abbreviateNumber(gemsEarned)), inline = true },
+{ name = "Level",       value = safe(getLeaderstat("Level")),               inline = true },
+}
+local xp = getXPText()
+if xp and xp ~= "" then
+fields[#fields + 1] = { name = "XP", value = xp, inline = true }
+end
+fields[#fields + 1] = { name = "Total Gold", value = safe(abbreviateNumber(totalGold)), inline = true }
+fields[#fields + 1] = { name = "Total Gems", value = safe(abbreviateNumber(totalGems)), inline = true }
+fields[#fields + 1] = { name = "Dungeon",    value = safe(getCurrentDungeonName()), inline = true }
+fields[#fields + 1] = { name = "Runs",       value = safe(StatsController.Runs), inline = true }
+fields[#fields + 1] = { name = "Gold/hr",    value = safe(abbreviateNumber(StatsController:GoldPerHour())), inline = true }
+fields[#fields + 1] = { name = "Session",    value = safe(StatsController:Runtime()), inline = true }
+local items = self._loot
+if #items == 0 then
+items = self:diffLoot()
+end
+local lootLines = {}
+for _, it in ipairs(items) do
+if it.rarity and it.rarity ~= "" then
+lootLines[#lootLines + 1] = ("**%s** (%s)"):format(it.name, it.rarity)
+else
+lootLines[#lootLines + 1] = ("**%s**"):format(it.name)
+end
+if #lootLines >= 25 then break end
+end
+local lootText = (#lootLines > 0) and table.concat(lootLines, "\n") or "No items"
+fields[#fields + 1] = { name = "Items", value = lootText:sub(1, 1000), inline = false }
+local payload = {
+username = "Dexori",
+embeds = { {
+title = "Dungeon Complete",
+color = 8388863,
+fields = fields,
+footer = { text = "Ryoichi is king glaze me" },
+} },
+}
+local ok, body = pcall(function()
+return game:GetService("HttpService"):JSONEncode(payload)
+end)
+if not ok then return false, "json encode failed" end
+return httpRequest({
+Url = url,
+Method = "POST",
+Headers = { ["Content-Type"] = "application/json" },
+Body = body,
+})
+end
+function WebhookController:Start()
+self:Stop()
+pcall(function() self:startLootHook() end)
+self:resetRun()
+self._sentThisRun = false
+self._wasInDungeon = (workspace:FindFirstChild("dungeon") ~= nil)
+self._conn = RunService.Heartbeat:Connect(function()
+local inDungeon = workspace:FindFirstChild("dungeon") ~= nil
+if inDungeon and not self._wasInDungeon then
+self._goldAtStart = getLeaderstat("Gold")
+self._gemsAtStart = getLeaderstat("Gems")
+self._loot = {}
+self._invStart = snapshotInventory()
+self._sentThisRun = false
+end
+if inDungeon then
+local pg = LocalPlayer:FindFirstChild("PlayerGui")
+local menu = pg and pg:FindFirstChild("Menu")
+local menuOpen = (menu and menu:IsA("ScreenGui") and menu.Enabled or false)
+or isDungeonFinished()
+if menuOpen and not self._sentThisRun then
+self._sentThisRun = true
+task.wait(2.5)
+pcall(function() self:sendSummary() end)
+self._goldAtStart = getLeaderstat("Gold")
+self._gemsAtStart = getLeaderstat("Gems")
+self._loot = {}
+self._invStart = snapshotInventory()
+elseif not menuOpen and self._sentThisRun and self._menuWasOpen then
+self._sentThisRun = false
+end
+self._menuWasOpen = menuOpen
+end
+if self._wasInDungeon and not inDungeon and not self._sentThisRun then
+self._sentThisRun = true
+task.wait(1)
+pcall(function() self:sendSummary() end)
+end
+self._wasInDungeon = inDungeon
+end)
+end
+function WebhookController:Stop()
+if self._conn then self._conn:Disconnect() self._conn = nil end
+end
+function WebhookController:SetEnabled(on)
+self.Enabled = on
+if on then self:Start() else self:Stop() end
+end
+local WebhookBox = Tabs.Misc:AddLeftGroupbox("Discord Webhook")
+WebhookBox:AddLabel("Webhook is always on")
+WebhookBox:AddButton({
+Text = "Send Test Message",
+Func = function()
+pcall(function() WebhookController:startLootHook() end)
+local ok, codeOrErr = WebhookController:sendSummary()
+if ok then
+notify({ Title = "Webhook", Description = "Sent (status " .. tostring(codeOrErr) .. ")", Time = 5 })
+else
+notify({ Title = "Webhook failed", Description = tostring(codeOrErr), Time = 6 })
+end
+end,
+})
+WebhookController:SetEnabled(true)
+local UtilityBox = Tabs.Misc:AddRightGroupbox("Utility")
+UtilityBox:AddToggle("AntiAFK", {
+Text = "Anti AFK",
+Default = true,
+Callback = function(v)
+AntiAFKController:SetEnabled(v)
+end,
+})
+UtilityBox:AddToggle("AutoRejoin", {
+Text = "Auto Rejoin on Disconnect",
+Default = false,
+Callback = function(v)
+AutoRejoinController:SetEnabled(v)
+end,
+})
+UtilityBox:AddToggle("Watchdog", {
+Text = "Loop Watchdog",
+Default = false,
+Callback = function(v)
+WatchdogController:SetEnabled(v)
+end,
+})
+UtilityBox:AddToggle("AutoQueue", {
+Text = "Auto Join Queue",
+Default = false,
+Callback = function(v)
+QueueController:SetEnabled(v)
+end,
+})
+UtilityBox:AddToggle("AutoClaimRewards", {
+Text = "Auto Claim Rewards",
+Default = false,
+Callback = function(v)
+RewardController:SetEnabled(v)
+end,
+})
+UtilityBox:AddToggle("DeathAlerts", {
+Text = "Webhook Death Alerts",
+Default = false,
+Callback = function(v)
+State.DeathAlerts = v
+end,
+})
+UtilityBox:AddToggle("AutoBonusBoss", {
+Text = "Auto Accept Bonus Boss",
+Default = false,
+Callback = function(v)
+BonusBossController:SetEnabled(v)
+end,
+})
+UtilityBox:AddToggle("AutoDeclineTrades", {
+Text = "Auto Decline Trades",
+Default = false,
+Callback = function(v)
+TradeDeclineController:SetEnabled(v)
+end,
+})
+UtilityBox:AddDivider()
+UtilityBox:AddDropdown("SkillStat", {
+Text = "Spend points into",
+Values = { "physicalPower", "spellPower", "stamina" },
+Default = 1,
+Callback = function(v)
+SkillPointsController.Stat = v
+end,
+})
+UtilityBox:AddToggle("AutoSkillPoints", {
+Text = "Auto Spend Skill Points",
+Default = false,
+Callback = function(v)
+SkillPointsController:SetEnabled(v)
+end,
+})
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({})
+ThemeManager:SetFolder("Dexori")
+SaveManager:SetFolder("Dexori/configs")
+local MenuGroup = Tabs.UISettings:AddLeftGroupbox("Menu")
+MenuGroup:AddToggle("HideOnLoad", {
+Text = "Hide UI on load",
+Default = false,
+})
+SaveManager:BuildConfigSection(Tabs.UISettings)
+ThemeManager:ApplyToTab(Tabs.UISettings)
+ThemeManager:LoadDefault()
+SaveManager:LoadAutoloadConfig()
+task.spawn(function()
+task.wait(0.2)
+pcall(function()
+local hide = Toggles.HideOnLoad and Toggles.HideOnLoad.Value
+if not hide then
+Window:Toggle(true)
+end
+end)
+end)
+local infoLabel = Library:AddDraggableLabel("Dexori")
+task.spawn(function()
+local frames, accum = 0, 0
+local fps = 0
+RunService.RenderStepped:Connect(function(dt)
+frames = frames + 1
+accum = accum + dt
+if accum >= 1 then
+fps = frames
+frames = 0
+accum = 0
+end
+end)
+while true do
+pcall(function()
+local ping = ""
+pcall(function()
+ping = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString():match("^(%d+)") or ""
+end)
+infoLabel:SetText(string.format("Dexori | %d fps | %sms | %s",
+fps, ping, StatsController:Runtime()))
+end)
+task.wait(1)
+end
+end)
+local function stopEverything()
+pcall(function() FloatController:SetEnabled(false) end)
+pcall(function() StallController:SetEnabled(false) end)
+pcall(function() ClickController:SetEnabled(false) end)
+pcall(function() KeyController.Keys = {}; KeyController:_refresh() end)
+pcall(function() WalkSpeed:SetEnabled(false) end)
+pcall(function() AutomationController:Stop() end)
+pcall(function() if LobbyController._thread then task.cancel(LobbyController._thread) end end)
+pcall(function() SellController:SetEnabled(false) end)
+pcall(function() ReturnController:SetEnabled(false) end)
+pcall(function() RunLimitController:SetEnabled(false) end)
+pcall(function() WebhookController:Stop() end)
+pcall(function() AntiAFKController:SetEnabled(false) end)
+pcall(function() BonusBossController:SetEnabled(false) end)
+pcall(function() TradeDeclineController:SetEnabled(false) end)
+pcall(function() SkillPointsController:SetEnabled(false) end)
+pcall(function() EquipController:SetEnabled(false) end)
+pcall(function() UpgradeController:SetEnabled(false) end)
+pcall(function() BossRaidController.Auto = false; BossRaidController:Refresh() end)
+pcall(function() AutoRejoinController:SetEnabled(false) end)
+pcall(function() WatchdogController:SetEnabled(false) end)
+pcall(function() QueueController:SetEnabled(false) end)
+pcall(function() RewardController:SetEnabled(false) end)
+end
+performUnload = function()
+stopEverything()
+Library:Unload()
+end
+Library:OnUnload(function()
+stopEverything()
+Library.Unloaded = true
+end)
+notify({
+Title = "Dexori",
+Description = "Loaded. Press Right-Ctrl to toggle.",
+Time = 5,
+})
