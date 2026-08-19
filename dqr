@@ -734,16 +734,16 @@ end
 self._holdSince = nil
 if self._extTarget ~= target then
 self._extTarget = target
-self._extY = 0
+self._extTop = 0
 pcall(function()
-local model = target.Parent
-if model and model:IsA("Model") then
-local ext = model:GetExtentsSize()
-self._extY = ext.Y * 0.5
+local model = target:FindFirstAncestorOfClass("Model")
+if model then
+local bbCF, bbSize = model:GetBoundingBox()
+self._extTop = (bbCF.Position.Y + bbSize.Y * 0.5) - target.Position.Y
 end
 end)
 end
-local h = math.max(self.Height, 13, (self._extY or 0) + 6); local offset = self.Below and -h or h; local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
+local h = math.max(self.Height, 13, (self._extTop or 0) + 6); local offset = self.Below and -h or h; local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
 if flatLook.Magnitude < 0.05 then flatLook = Vector3.new(0, 0, -1) end
 local base = CFrame.lookAt(goal, goal + flatLook.Unit); local floatCF = base * CFrame.Angles(math.rad(-90), 0, 0)
 local function faceMobCF(pos)
@@ -762,7 +762,20 @@ if self._dodgeTarget then local cf = faceMobCF(self._dodgeTarget); hrp.CFrame = 
 else
 FLOAT_STATE = "BAIT"; self._dodgeTarget = nil; Decoy:setVisible(false); setTranspCached(character, 0)
 if hrp.Anchored then hrp.Anchored = false end
-hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero; local cf = faceMobCF(goal); hrp.CFrame = cf; self._lastFloatCF = cf; self._activeCF = cf
+hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
+local cf
+local cur = hrp.Position
+local delta = goal - cur
+if delta.Magnitude > 40 then
+FLOAT_STATE = "travel"
+local nextPos = cur + delta.Unit * 30
+local ny = math.max(nextPos.Y, goal.Y, cur.Y)
+nextPos = Vector3.new(nextPos.X, ny, nextPos.Z)
+cf = faceMobCF(nextPos)
+else
+cf = faceMobCF(goal)
+end
+hrp.CFrame = cf; self._lastFloatCF = cf; self._activeCF = cf
 end
 end)
 end
