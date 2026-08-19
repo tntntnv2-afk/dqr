@@ -195,6 +195,7 @@ end
 end
 return best
 end
+local LAST_ABILITY_USE = 0
 local TELEGRAPH_KEYWORDS = {
 	"precast", "hitbox", "hit box",
 	"tentacle", "tentacal", "tenticle", "kraken", "blade",
@@ -214,7 +215,22 @@ local TELEGRAPH_KEYWORDS = {
 local TELEGRAPH_IGNORE = {
 	"gui", "smoke", "highlight", "spawneffect", "forcefield",
 	"lookaway", "safespot", "passivehighlight", "mark",
-	"particle", "decal", "vfx", "glow",
+	"particle", "decal", "vfx", "glow", "handle", "dexoridecoy",
+	"agony orbs", "amethyst beams", "amethyst blast", "arrow barrage", "arrow rain",
+	"blade barrage", "blade fall", "blade storm", "blade throw", "carrot barrage",
+	"chain heal", "chained energy blasts", "concussive blast", "crystalline cannon",
+	"demonic spikes", "demonic strike", "earth clap", "earth kick", "earth spikes",
+	"egg bomb", "electric slash", "explosive mine", "explosive punch", "flame cyclone",
+	"flame shuriken", "focus beam", "forgotten army", "frost cone", "fungal poison",
+	"gale barrage", "ghostly cannon barrage", "ghostly rampage", "god spear",
+	"ground slam", "ground stomp", "guardian call", "hand cannon", "ice barrage",
+	"ice crash", "ice spikes", "icicle barrage", "illusion blast", "infernal strike",
+	"jade roller", "lava barrage", "lava cage", "lava lash", "life dash", "life pulse",
+	"lightning burst", "mighty leap", "molten shards", "phantom blades", "phantom flames",
+	"phantom striker", "phase barrage", "piercing roots", "poison cloud", "pulse beam",
+	"rending slice", "runic strike", "skull flames", "solar beam", "soul drain",
+	"spear strike", "star barrage", "thunderous blast", "triple blade throw",
+	"twin slash", "void spheres", "wind blast",
 }
 local function nameIgnored(n)
 	for _, ig in ipairs(TELEGRAPH_IGNORE) do
@@ -230,9 +246,53 @@ local function nameIsTelegraph(name)
 	end
 	return false
 end
+local function ownedByPlayerOrDecoy(part)
+	local a = part.Parent
+	while a and a ~= workspace and a ~= game do
+		if a:IsA("Model") then
+			if a.Name == "DexoriDecoy" then return true end
+			if Players:GetPlayerFromCharacter(a) then return true end
+		end
+		a = a.Parent
+	end
+	return false
+end
+local _equipNames, _equipScanT = {}, 0
+local function refreshEquipNames()
+	if os.clock() - _equipScanT < 2 then return end
+	_equipScanT = os.clock()
+	local t = {}
+	local function scan(container)
+		if not container then return end
+		for _, child in ipairs(container:GetChildren()) do
+			local as = child:FindFirstChild("abilitySlot")
+			if as then
+				local nm = child.Name:lower()
+				t[#t + 1] = nm
+				local ns = nm:gsub("%s+", "")
+				if ns ~= nm then t[#t + 1] = ns end
+			end
+		end
+	end
+	pcall(function()
+		scan(LocalPlayer:FindFirstChild("Backpack"))
+		scan(LocalPlayer.Character)
+	end)
+	_equipNames = t
+end
+local function isEquippedAbilityFx(n)
+	refreshEquipNames()
+	if n:find("hitbox", 1, true) or n:find("precast", 1, true) then return false end
+	for _, anm in ipairs(_equipNames) do
+		if n:find(anm, 1, true) then return true end
+	end
+	return false
+end
 local function partIsTelegraph(part)
 	if not part:IsA("BasePart") then return false end
+	if ownedByPlayerOrDecoy(part) then return false end
 	local n = part.Name:lower()
+	if isEquippedAbilityFx(n) then return false end
 	if nameIgnored(n) then return false end
 	if nameIsTelegraph(n) then return true end
 	local mat = part.Material
@@ -246,6 +306,8 @@ end
 local _teleCache, _teleScan = {}, 0
 local _teleSeen = {}
 local _teleClass = setmetatable({}, { __mode = "k" })
+local _tracked = setmetatable({}, { __mode = "k" })
+local _trackInit = false
 local function classifyTelegraph(d)
 	local c = _teleClass[d]
 	if c == nil then
@@ -254,20 +316,56 @@ local function classifyTelegraph(d)
 	end
 	return c
 end
+local function initTelegraphTracking()
+	if _trackInit then return end
+	_trackInit = true
+	workspace.DescendantAdded:Connect(function(d)
+		if classifyTelegraph(d) then _tracked[d] = true end
+	end)
+	workspace.DescendantRemoving:Connect(function(d)
+		if _tracked[d] then _tracked[d] = nil; _teleSeen[d] = nil end
+	end)
+	for _, d in ipairs(workspace:GetDescendants()) do
+		if classifyTelegraph(d) then _tracked[d] = true end
+	end
+end
 local function getTelegraphParts()
 	if os.clock() - _teleScan > 0.08 then
 		_teleScan = os.clock()
+		initTelegraphTracking()
 		local found = {}
 		local now = os.clock()
 		local live = {}
-		for _, d in ipairs(workspace:GetDescendants()) do
-			if classifyTelegraph(d) then
-				found[#found + 1] = d
+		local newUnnamed = {}
+		local char = LocalPlayer.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		local myPos = hrp and hrp.Position
+		for d in pairs(_tracked) do
+			if d.Parent then
 				if d.Transparency < 0.95 then
-					if not _teleSeen[d] then _teleSeen[d] = now end
+					if not _teleSeen[d] then
+						_teleSeen[d] = now
+						if not nameIsTelegraph(d.Name) then newUnnamed[#newUnnamed + 1] = d end
+					end
 					live[d] = true
+					if (not myPos) or (d.Position - myPos).Magnitude <= 200 then
+						found[#found + 1] = d
+					end
 				end
+			else
+				_tracked[d] = nil; _teleSeen[d] = nil
 			end
+		end
+		if #newUnnamed > 8 and (now - LAST_ABILITY_USE) < 0.7 then
+			local drop = {}
+			for _, d in ipairs(newUnnamed) do
+				_teleClass[d] = false; _teleSeen[d] = nil; live[d] = nil; _tracked[d] = nil; drop[d] = true
+			end
+			local kept = {}
+			for _, d in ipairs(found) do
+				if not drop[d] then kept[#kept + 1] = d end
+			end
+			found = kept
 		end
 		for part in pairs(_teleSeen) do
 			if not live[part] then _teleSeen[part] = nil end
@@ -323,6 +421,10 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 	for _, part in ipairs(getTelegraphParts()) do
 		if part.Parent and part.Transparency < 0.95 and (ignoreFresh or partIsFreshThreat(part)) then
 			local s = part.Size
+			local rdx = pos.X - part.Position.X
+			local rdz = pos.Z - part.Position.Z
+			local reach = math.max(s.X, s.Z) * 0.5 + margin + 10
+			if rdx * rdx + rdz * rdz <= reach * reach then
 			local cf = part.CFrame
 			local longAxis = math.max(s.X, s.Z)
 			local shortAxis = math.min(s.X, s.Z)
@@ -358,6 +460,7 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 				if (pflat - flat).Magnitude <= telegraphRadius(part) + margin then
 					return false
 				end
+			end
 			end
 			end
 		end
@@ -436,18 +539,23 @@ local MechanicsController
 local FloatController = {
 Enabled = false, Height = 10, Below = false, DodgeRange = 60, _conn = nil,
 }
-local LAST_ABILITY_USE = 0
 local function markAbilityUsed()
 LAST_ABILITY_USE = os.clock()
 end
 local FLOAT_STATE = "off"; local MECH_STATE = "idle"
 local Decoy = { model = nil, humanoid = nil, visible = false }
+local _lastTranspChar, _lastTranspVal = nil, nil
 local function setLocalTransparency(character, value)
+_lastTranspChar = character; _lastTranspVal = value
 for _, p in ipairs(character:GetDescendants()) do
 if p:IsA("BasePart") or p:IsA("Decal") then
 pcall(function() p.LocalTransparencyModifier = value end)
 end
 end
+end
+local function setTranspCached(character, value)
+if _lastTranspChar == character and _lastTranspVal == value then return end
+setLocalTransparency(character, value)
 end
 function Decoy:ensure(character)
 if self.model and self.model.Parent then return end
@@ -543,11 +651,19 @@ return
 end
 local humanoid = character:FindFirstChildOfClass("Humanoid")
 if humanoid and humanoid.AutoRotate then humanoid.AutoRotate = false end
-local mechOverride = MechanicsController and MechanicsController:getOverride()
+local mechOverride, mechMode
+if MechanicsController then mechOverride, mechMode = MechanicsController:getOverride() end
 if mechOverride then
-FLOAT_STATE = "mechanic"; self._dodgeTarget = nil; Decoy:setVisible(false); setLocalTransparency(character, 0)
+FLOAT_STATE = "mechanic"; self._dodgeTarget = nil; Decoy:setVisible(false); setTranspCached(character, 0)
 if hrp.Anchored then hrp.Anchored = false end
-hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero; local h = math.max(self.Height, 13); local offset = self.Below and -h or h; local dest = mechOverride + Vector3.new(0, offset, 0); hrp.CFrame = CFrame.new(dest); self._lastFloatCF = CFrame.new(dest); self._activeCF = CFrame.new(dest)
+hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
+local dest
+if mechMode == "ground" then
+dest = mechOverride + Vector3.new(0, 3, 0)
+else
+local h = math.max(self.Height, 13); local offset = self.Below and -h or h; dest = mechOverride + Vector3.new(0, offset, 0)
+end
+hrp.CFrame = CFrame.new(dest); self._lastFloatCF = CFrame.new(dest); self._activeCF = CFrame.new(dest)
 return
 end
 local target = self:_pickTarget(hrp.Position)
@@ -555,10 +671,10 @@ if not target then
 FLOAT_STATE = "no target"; self._dodgeTarget = nil; self._target = nil; local now = os.clock()
 if self._lastFloatCF then
 self._holdSince = self._holdSince or now
-if now - self._holdSince < 6 then
+if workspace:FindFirstChild("dungeon") ~= nil or now - self._holdSince < 6 then
 FLOAT_STATE = "hold"
 if hrp.Anchored then hrp.Anchored = false end
-hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero; hrp.CFrame = self._lastFloatCF; self._activeCF = self._lastFloatCF; setLocalTransparency(character, 0)
+hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero; hrp.CFrame = self._lastFloatCF; self._activeCF = self._lastFloatCF; setTranspCached(character, 0)
 return
 end
 end
@@ -582,12 +698,12 @@ Decoy:ensure(character); Decoy:moveTo(floatCF)
 local attacking = isMobAttackingNear(goal, self.DodgeRange or 60) or not spotIsClearEx(goal, 2, true)
 if attacking then
 if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 6) or not spotIsClearEx(self._dodgeTarget, 2, true) then self._dodgeTarget = findAttackSafeSpot(target, math.max(self.Height, 13), self.Below) end
-FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setLocalTransparency(character, 1)
+FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setTranspCached(character, 1)
 if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
 if self._dodgeTarget then local cf = faceMobCF(self._dodgeTarget); hrp.CFrame = cf; self._lastFloatCF = cf; self._activeCF = cf end
 else
-FLOAT_STATE = "BAIT"; self._dodgeTarget = nil; Decoy:setVisible(false); setLocalTransparency(character, 0)
+FLOAT_STATE = "BAIT"; self._dodgeTarget = nil; Decoy:setVisible(false); setTranspCached(character, 0)
 if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero; local cf = faceMobCF(goal); hrp.CFrame = cf; self._lastFloatCF = cf; self._activeCF = cf
 end
@@ -666,6 +782,41 @@ if nearest > bestScore then bestScore = nearest; best = cand end
 end
 return best
 end
+function MechanicsController:_shieldPos()
+local ok, pos = pcall(function()
+local arena = workspace:FindFirstChild("Arena")
+local ffModel = arena and arena:FindFirstChild("forceField")
+local pp = ffModel and ffModel.PrimaryPart
+if not pp then return nil end
+local inner = ffModel:FindFirstChild("forceField")
+local b1 = inner and inner:FindFirstChild("Beam1")
+local b2 = inner and inner:FindFirstChild("Beam2")
+if (b1 and b1.Enabled) or (b2 and b2.Enabled) then return pp.Position end
+return nil
+end)
+if ok then return pos end
+return nil
+end
+function MechanicsController:_cannonPos(hrp)
+local this = self
+local ok, pos = pcall(function()
+local pickup = workspace:FindFirstChild("playerPickupCannonballRing")
+local fireM = workspace:FindFirstChild("playerFireCannon")
+local fireRing = fireM and fireM:FindFirstChild("ring")
+local pickupActive = pickup and pickup.Transparency < 0.5
+local fireActive = fireRing and fireRing.Transparency < 0.5
+if not (pickupActive or fireActive) then this._cannonPhase = nil return nil end
+if this._cannonPhase ~= "fire" and pickupActive then
+local d = (Vector2.new(pickup.Position.X, pickup.Position.Z) - Vector2.new(hrp.Position.X, hrp.Position.Z)).Magnitude
+if d <= 5 then this._cannonPhase = "fire" else return pickup.Position end
+end
+if fireActive then return fireRing.Position end
+if pickupActive then return pickup.Position end
+return nil
+end)
+if ok then return pos end
+return nil
+end
 function MechanicsController:getOverride()
 if not self.Enabled then return nil end
 local character = LocalPlayer.Character
@@ -676,6 +827,16 @@ local safe = nearestActiveSafeSpot(hrp.Position)
 if safe then
 MECH_STATE = "safe zone"
 return safe
+end
+local shield = self:_shieldPos()
+if shield then
+MECH_STATE = "shield"
+return shield, "ground"
+end
+local cannon = self:_cannonPos(hrp)
+if cannon then
+MECH_STATE = "cannon"
+return cannon, "ground"
 end
 if characterIsMarked(character) then
 local away = farthestPointFromPlayers(character)
