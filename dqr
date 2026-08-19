@@ -163,6 +163,20 @@ local function getMobs()
 if os.clock() - lastScan > 0.5 then lastScan = os.clock(); mobCache = scanForMobs() end
 return mobCache
 end
+-- Only acquire mobs that are actually near the player's current room.
+-- This prevents Auto Play from selecting a mob in the next room and
+-- teleporting the player across the room boundary/floor.
+local CURRENT_ROOM_MAX_HORIZONTAL = 75
+local CURRENT_ROOM_MAX_VERTICAL = 45
+
+local function mobIsInCurrentRoom(root, fromPosition)
+if not root then return false end
+local delta = root.Position - fromPosition
+local horizontal = Vector3.new(delta.X, 0, delta.Z).Magnitude
+local vertical = math.abs(delta.Y)
+return horizontal <= CURRENT_ROOM_MAX_HORIZONTAL and vertical <= CURRENT_ROOM_MAX_VERTICAL
+end
+
 local function getNearestMobRoot(fromPosition)
 local nearestRoot, nearestDist = nil, math.huge
 for _, mob in ipairs(getMobs()) do
@@ -171,8 +185,9 @@ local root = mob:FindFirstChild("HumanoidRootPart")
 or mob:FindFirstChild("hitBox")
 or mob.PrimaryPart
 or mob:FindFirstChildWhichIsA("BasePart")
-if root then
-local dist = (root.Position - fromPosition).Magnitude
+if root and mobIsInCurrentRoom(root, fromPosition) then
+local delta = root.Position - fromPosition
+local dist = delta.Magnitude
 if dist < nearestDist then nearestDist = dist; nearestRoot = root end
 end
 end
