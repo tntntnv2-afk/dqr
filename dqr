@@ -546,7 +546,7 @@ local function findAttackSafeSpot(target, offset, below)
 		end
 	end
 
-	for _, clearance in ipairs({ 6, 4 }) do
+	for _, clearance in ipairs({ 8, 6 }) do
 		local best, bestDist = nil, math.huge
 		for _, c in ipairs(candidates) do
 			local d = (c - mobPos).Magnitude
@@ -743,7 +743,7 @@ self._extTop = (bbCF.Position.Y + bbSize.Y * 0.5) - target.Position.Y
 end
 end)
 end
-local h = math.max(self.Height, 13, (self._extTop or 0) + 6); local offset = self.Below and -h or h; local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
+local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 35)); local offset = self.Below and -h or h; local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
 if flatLook.Magnitude < 0.05 then flatLook = Vector3.new(0, 0, -1) end
 local base = CFrame.lookAt(goal, goal + flatLook.Unit); local floatCF = base * CFrame.Angles(math.rad(-90), 0, 0)
 local function faceMobCF(pos)
@@ -754,7 +754,7 @@ end
 Decoy:ensure(character); Decoy:moveTo(floatCF)
 local attacking = isMobAttackingNear(goal, self.DodgeRange or 60) or not spotIsClearEx(goal, 2, true)
 if attacking then
-if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 6) or not spotIsClearEx(self._dodgeTarget, 2, true) then self._dodgeTarget = findAttackSafeSpot(target, h, self.Below) end
+if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 4) or not spotIsClearEx(self._dodgeTarget, 2, true) then self._dodgeTarget = findAttackSafeSpot(target, h, self.Below) end
 FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setTranspCached(character, 1)
 if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
