@@ -534,15 +534,29 @@ local SAFE_CLEARANCE = 18
 local function findAttackSafeSpot(target, offset, preferUp)
 	local mobPos = target.Position
 	local yOff = offset
+	local function mobClear(c)
+		for _, mob in ipairs(getMobs()) do
+			local root = mob:FindFirstChild("HumanoidRootPart") or mob:FindFirstChild("hitBox") or mob.PrimaryPart
+			if root then
+				local dx = c.X - root.Position.X
+				local dz = c.Z - root.Position.Z
+				if dx * dx + dz * dz < 400 then
+					local dy = c.Y - root.Position.Y
+					if dx * dx + dy * dy + dz * dz <= 182.25 then return false end
+				end
+			end
+		end
+		return true
+	end
 
 	if preferUp then
 		for _, up in ipairs({ 22, 32, 44 }) do
 			local c = mobPos + Vector3.new(0, yOff + up, 0)
-			if spotIsClear(c, 6) and spotIsClearEx(c, 2, true) then return c end
+			if spotIsClear(c, 6) and spotIsClearEx(c, 2, true) and mobClear(c) then return c end
 			for a = 0, 3 do
 				local angle = (a / 4) * math.pi * 2
 				local c2 = mobPos + Vector3.new(math.cos(angle) * 8, yOff + up, math.sin(angle) * 8)
-				if spotIsClear(c2, 6) and spotIsClearEx(c2, 2, true) then return c2 end
+				if spotIsClear(c2, 6) and spotIsClearEx(c2, 2, true) and mobClear(c2) then return c2 end
 			end
 		end
 	end
@@ -574,7 +588,7 @@ local function findAttackSafeSpot(target, offset, preferUp)
 		for _, c in ipairs(candidates) do
 			local d = (c - mobPos).Magnitude
 			local dFlat = Vector2.new(c.X - mobPos.X, c.Z - mobPos.Z).Magnitude
-			if dFlat <= ATTACK_RANGE and spotIsClear(c, clearance) and spotIsClearEx(c, 2, true) then
+			if dFlat <= ATTACK_RANGE and spotIsClear(c, clearance) and spotIsClearEx(c, 2, true) and mobClear(c) then
 				if d < bestDist then bestDist = d; best = c end
 			end
 		end
@@ -590,7 +604,7 @@ local function findAttackSafeSpot(target, offset, preferUp)
 	end
 	local best, bestDist = nil, math.huge
 	for _, c in ipairs(candidates) do
-		if spotIsClear(c, 14) and spotIsClearEx(c, 2, true) then
+		if spotIsClear(c, 14) and spotIsClearEx(c, 2, true) and mobClear(c) then
 			local d = (c - mobPos).Magnitude
 			if d < bestDist then bestDist = d; best = c end
 		end
@@ -780,7 +794,20 @@ self._extTop = topY - target.Position.Y
 end
 end)
 end
-local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 60)); local goal = target.Position + Vector3.new(0, h, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
+local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 60))
+for _, mob in ipairs(getMobs()) do
+local root = mob:FindFirstChild("HumanoidRootPart") or mob:FindFirstChild("hitBox") or mob.PrimaryPart
+if root then
+local ndx = root.Position.X - target.Position.X
+local ndz = root.Position.Z - target.Position.Z
+if ndx * ndx + ndz * ndz < 225 then
+local needH = (root.Position.Y - target.Position.Y) + 13.5
+if needH > h then h = needH end
+end
+end
+end
+if h > 60 then h = 60 end
+local goal = target.Position + Vector3.new(0, h, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
 if flatLook.Magnitude < 0.05 then flatLook = Vector3.new(0, 0, -1) end
 local base = CFrame.lookAt(goal, goal + flatLook.Unit); local floatCF = base * CFrame.Angles(math.rad(-90), 0, 0)
 local function faceMobCF(pos)
@@ -809,7 +836,7 @@ local dflat = Vector3.new(self._dodgeTarget.X - dcur.X, 0, self._dodgeTarget.Z -
 local cf
 if dflat.Magnitude > 40 then
 local nextPos = dcur + dflat.Unit * 30
-local ny = math.max(dcur.Y, self._dodgeTarget.Y)
+local ny = math.max(dcur.Y, self._dodgeTarget.Y + 25)
 cf = faceMobCF(Vector3.new(nextPos.X, ny, nextPos.Z))
 else
 cf = faceMobCF(self._dodgeTarget)
@@ -826,7 +853,7 @@ local flatDelta = Vector3.new(goal.X - cur.X, 0, goal.Z - cur.Z)
 if flatDelta.Magnitude > 40 then
 FLOAT_STATE = "travel"
 local nextPos = cur + flatDelta.Unit * 30
-local ny = math.max(cur.Y, goal.Y)
+local ny = math.max(cur.Y, goal.Y + 25)
 nextPos = Vector3.new(nextPos.X, ny, nextPos.Z)
 cf = faceMobCF(nextPos)
 else
@@ -953,11 +980,11 @@ this._grabbed = this._grabbed or setmetatable({}, { __mode = "k" })
 if this._grabbed[ff] then return nil end
 local char = LocalPlayer.Character
 local hrp = char and char:FindFirstChild("HumanoidRootPart")
-if hrp and (hrp.Position - pp.Position).Magnitude <= 6 then
+if hrp and (hrp.Position - pp.Position).Magnitude <= 18 then
 this._grabbed[ff] = true
 return nil
 end
-return pp.Position, "exact"
+return pp.Position + Vector3.new(0, 16, 0), "exact"
 end
 end
 local arena = workspace:FindFirstChild("Arena")
