@@ -867,6 +867,7 @@ local MARK_NAMES = {
 }
 local SAFE_CONTAINERS = { "thirdBossSafeZones", "bonusBossColorSafeSpots", "firstBossSafeZones", "thirdBossSafeSpots", "thirdBossSafeSpotSpawns", "thirdBossMassSafeSpotCircles", "thirdBossMemorySafeZone" }
 local SAFE_PART_NAMES = { safeSpotCircle = true, safeBox = true, safeBeam = true }
+local _safeAnchor = setmetatable({}, { __mode = "k" })
 local function characterIsMarked(character)
 for _, d in ipairs(character:GetDescendants()) do
 local n = d.Name
@@ -895,8 +896,10 @@ local function scan(strictColor)
 local best, bestDist = nil, math.huge
 local function consider(part)
 if not part:IsA("BasePart") then return end
-local d = (part.Position - fromPos).Magnitude
-if d < bestDist then bestDist = d; best = part.Position end
+local anchor = _safeAnchor[part]
+if not anchor then anchor = part.Position; _safeAnchor[part] = anchor end
+local d = (anchor - fromPos).Magnitude
+if d < bestDist then bestDist = d; best = anchor end
 end
 local function colorMatch(part, ref)
 if not (strictColor and ref) then return true end
@@ -976,10 +979,16 @@ if ff:IsA("BasePart") then pp = ff
 elseif ff:IsA("Model") then pp = ff.PrimaryPart or ff:FindFirstChildWhichIsA("BasePart") end
 if pp then
 this._grabbed = this._grabbed or setmetatable({}, { __mode = "k" })
+this._ffSeen = this._ffSeen or setmetatable({}, { __mode = "k" })
 if this._grabbed[ff] then return nil end
+if not this._ffSeen[ff] then this._ffSeen[ff] = os.clock() end
 local char = LocalPlayer.Character
 local hrp = char and char:FindFirstChild("HumanoidRootPart")
-if hrp and (hrp.Position - pp.Position).Magnitude <= 18 then
+if hrp and (hrp.Position - pp.Position).Magnitude <= 24 then
+this._grabbed[ff] = true
+return nil
+end
+if os.clock() - this._ffSeen[ff] > 4 then
 this._grabbed[ff] = true
 return nil
 end
