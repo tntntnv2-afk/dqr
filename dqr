@@ -527,80 +527,6 @@ local function spotIsClear(pos, margin)
 	return spotIsClearEx(pos, margin, false)
 end
 
-local ATTACK_RANGE = 42
-
-local SAFE_CLEARANCE = 18
-
-local function findAttackSafeSpot(target, offset, preferUp)
-	local mobPos = target.Position
-	local yOff = offset
-
-	if preferUp then
-		for _, up in ipairs({ 22, 32, 44 }) do
-			local c = mobPos + Vector3.new(0, safeY + up, 0)
-			if spotIsClear(c, 6) and spotIsClearEx(c, 2, true) then return c end
-			for a = 0, 3 do
-				local angle = (a / 4) * math.pi * 2
-				local c2 = mobPos + Vector3.new(math.cos(angle) * 8, safeY + up, math.sin(angle) * 8)
-				if spotIsClear(c2, 6) and spotIsClearEx(c2, 2, true) then return c2 end
-			end
-		end
-	end
-
-	local safeY = math.max(yOff, 20)
-	local candidates = {
-		mobPos + Vector3.new(0, safeY, 0),
-	}
-	for _, radius in ipairs({ 6, 10, 15, 20, 26, 32, 40 }) do
-		for a = 0, 7 do
-			local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
-			candidates[#candidates + 1] =
-				mobPos + Vector3.new(math.cos(angle) * radius, safeY, math.sin(angle) * radius)
-		end
-	end
-	for _, up in ipairs({ 14, 22, 32, 44 }) do
-		candidates[#candidates + 1] = mobPos + Vector3.new(0, safeY + up, 0)
-		for a = 0, 3 do
-			local angle = (a / 4) * math.pi * 2
-			candidates[#candidates + 1] =
-				mobPos + Vector3.new(math.cos(angle) * 8, safeY + up, math.sin(angle) * 8)
-		end
-	end
-
-	for _, clearance in ipairs({ 8, 6 }) do
-		local best, bestDist = nil, math.huge
-		for _, c in ipairs(candidates) do
-			local d = (c - mobPos).Magnitude
-			if d <= ATTACK_RANGE and spotIsClear(c, clearance) and spotIsClearEx(c, 2, true) then
-				if d < bestDist then bestDist = d; best = c end
-			end
-		end
-		if best then return best end
-	end
-
-	for _, radius in ipairs({ 55, 70, 90, 115, 145 }) do
-		for a = 0, 7 do
-			local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
-			candidates[#candidates + 1] =
-				mobPos + Vector3.new(math.cos(angle) * radius, safeY, math.sin(angle) * radius)
-		end
-	end
-	local best, bestDist = nil, math.huge
-	for _, c in ipairs(candidates) do
-		if spotIsClear(c, 14) and spotIsClearEx(c, 2, true) then
-			local d = (c - mobPos).Magnitude
-			if d < bestDist then bestDist = d; best = c end
-		end
-	end
-	if best then return best end
-
-	local far, farScore = nil, -1
-	for _, c in ipairs(candidates) do
-		local clear = nearestTelegraphDist(c)
-		if clear > farScore then farScore = clear; far = c end
-	end
-	return far or (mobPos + Vector3.new(0, safeY, 0))
-end
 local MechanicsController
 local FloatController = {
 Enabled = false, Height = 10, DodgeRange = 60, _conn = nil,
@@ -729,7 +655,7 @@ dest = mechOverride
 elseif mechMode == "ground" then
 dest = mechOverride + Vector3.new(0, 3, 0)
 else
-local h = math.max(self.Height, 13); local offset = h; dest = mechOverride + Vector3.new(0, offset, 0)
+local h = math.max(self.Height, 13); dest = mechOverride + Vector3.new(0, h, 0)
 end
 hrp.CFrame = CFrame.new(dest); self._lastFloatCF = CFrame.new(dest); self._activeCF = CFrame.new(dest)
 return
@@ -766,7 +692,7 @@ self._extTop = (bbCF.Position.Y + bbSize.Y * 0.5) - target.Position.Y
 end
 end)
 end
-local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 35)); local offset = h; local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
+local h = math.max(self.Height, 20); local topClearance = math.max((self._extTop or 0) + 8, 20); local goal = target.Position + Vector3.new(0, h + topClearance, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
 if flatLook.Magnitude < 0.05 then flatLook = Vector3.new(0, 0, -1) end
 local base = CFrame.lookAt(goal, goal + flatLook.Unit); local floatCF = base * CFrame.Angles(math.rad(-90), 0, 0)
 local function faceMobCF(pos)
@@ -776,50 +702,23 @@ return CFrame.lookAt(pos, target.Position)
 end
 Decoy:ensure(character); Decoy:moveTo(floatCF)
 local attacking = isMobAttackingNear(goal, self.DodgeRange or 60) or not spotIsClearEx(goal, 2, true)
-if attacking then
-if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 4) or not spotIsClearEx(self._dodgeTarget, 2, true) then
-local nowc = os.clock()
-if self._dodgeTarget then
-if nowc - (self._reWin or 0) > 5 then self._reWin = nowc; self._reN = 0 end
-self._reN = (self._reN or 0) + 1
-if self._reN >= 3 then self._upUntil = nowc + 8 end
-end
-self._dodgeTarget = findAttackSafeSpot(target, h, nowc < (self._upUntil or 0))
-end
-FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setTranspCached(character, 1)
+-- Never teleport to a mob or use a horizontal dodge destination.
+-- Stay vertically above the mob at all times.
+FLOAT_STATE = attacking and "BAIT" or "travel"; self._dodgeTarget = nil
+Decoy:setVisible(not attacking); setTranspCached(character, attacking and 1 or 0)
 if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
-if self._dodgeTarget then
-local dcur = hrp.Position
-local dflat = Vector3.new(self._dodgeTarget.X - dcur.X, 0, self._dodgeTarget.Z - dcur.Z)
-local cf
-if dflat.Magnitude > 40 then
-local nextPos = dcur + dflat.Unit * 30
-local ny = math.max(dcur.Y, self._dodgeTarget.Y)
-cf = faceMobCF(Vector3.new(nextPos.X, ny, nextPos.Z))
-else
-cf = faceMobCF(self._dodgeTarget)
-end
-hrp.CFrame = cf; self._lastFloatCF = cf; self._activeCF = cf
-end
-else
-FLOAT_STATE = "BAIT"; self._dodgeTarget = nil; Decoy:setVisible(false); setTranspCached(character, 0)
-if hrp.Anchored then hrp.Anchored = false end
-hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
-local cf
 local cur = hrp.Position
 local flatDelta = Vector3.new(goal.X - cur.X, 0, goal.Z - cur.Z)
+local cf
 if flatDelta.Magnitude > 40 then
-FLOAT_STATE = "travel"
-local nextPos = cur + flatDelta.Unit * 30
-local ny = math.max(cur.Y, goal.Y)
-nextPos = Vector3.new(nextPos.X, ny, nextPos.Z)
-cf = faceMobCF(nextPos)
+    local nextPos = cur + flatDelta.Unit * 30
+    local ny = math.max(cur.Y, goal.Y)
+    cf = faceMobCF(Vector3.new(nextPos.X, ny, nextPos.Z))
 else
-cf = faceMobCF(goal)
+    cf = faceMobCF(goal)
 end
 hrp.CFrame = cf; self._lastFloatCF = cf; self._activeCF = cf
-end
 end)
 end
 function FloatController:SetEnabled(on)
