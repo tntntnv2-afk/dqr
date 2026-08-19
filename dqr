@@ -471,7 +471,6 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 			local rdz = pos.Z - part.Position.Z
 			local reach = math.max(s.X, s.Y, s.Z) * 0.5 + margin + 10
 			if rdx * rdx + rdz * rdz <= reach * reach then
-			local cf = part.CFrame
 			local n = part.Name:lower()
 			local bump = 0
 			if n:find("tentacle") or n:find("kraken") or n:find("swing")
@@ -482,12 +481,11 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 			local mn = math.min(s.X, s.Y, s.Z)
 			local md = s.X + s.Y + s.Z - mx - mn
 			if md > mx * 0.6 and mn < md * 0.34 then
-				local dy = pos.Y - part.Position.Y
-				local d3 = math.sqrt(rdx * rdx + dy * dy + rdz * rdz)
-				if d3 <= mx * 0.5 + 4 + bump + margin then
+				if math.sqrt(rdx * rdx + rdz * rdz) <= mx * 0.5 + 4 + bump + margin then
 					return false
 				end
 			else
+			local cf = part.CFrame
 			local rv, uv, lv = cf.RightVector, cf.UpVector, cf.LookVector
 			local hR = math.sqrt(rv.X * rv.X + rv.Z * rv.Z) * s.X
 			local hU = math.sqrt(uv.X * uv.X + uv.Z * uv.Z) * s.Y
@@ -496,11 +494,8 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 			if hU > domLen then domLen, domVec = hU, uv end
 			if hL > domLen then domLen, domVec = hL, lv end
 			local perpW = hR + hU + hL - domLen
-			local vHalf = math.abs(rv.Y) * s.X * 0.5 + math.abs(uv.Y) * s.Y * 0.5 + math.abs(lv.Y) * s.Z * 0.5
 			local isLong = domLen > perpW * 3 and domLen > 20
 			local horizR = isLong and (perpW * 0.5 + bump) or (domLen * 0.5 + 4 + bump)
-			if pos.Y > part.Position.Y + vHalf + math.max(isLong and 18 or 12, horizR + margin) then
-			else
 			local dirFlat = Vector2.new(domVec.X, domVec.Z)
 			if isLong and dirFlat.Magnitude >= 0.001 then
 				dirFlat = dirFlat.Unit
@@ -521,7 +516,6 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 			end
 			end
 			end
-			end
 		end
 	end
 	return true
@@ -534,7 +528,7 @@ local ATTACK_RANGE = 42
 
 local SAFE_CLEARANCE = 18
 
-local function findAttackSafeSpot(target, offset, preferUp)
+local function findAttackSafeSpot(target, offset)
 	local mobPos = target.Position
 	local yOff = offset
 	local function mobClear(c)
@@ -552,18 +546,6 @@ local function findAttackSafeSpot(target, offset, preferUp)
 		return true
 	end
 
-	if preferUp then
-		for _, up in ipairs({ 22, 32, 44 }) do
-			local c = mobPos + Vector3.new(0, yOff + up, 0)
-			if spotIsClear(c, 6) and spotIsClearEx(c, 2, true) and mobClear(c) then return c end
-			for a = 0, 3 do
-				local angle = (a / 4) * math.pi * 2
-				local c2 = mobPos + Vector3.new(math.cos(angle) * 8, yOff + up, math.sin(angle) * 8)
-				if spotIsClear(c2, 6) and spotIsClearEx(c2, 2, true) and mobClear(c2) then return c2 end
-			end
-		end
-	end
-
 	local candidates = {
 		mobPos + Vector3.new(0, yOff, 0),
 		mobPos,
@@ -575,14 +557,6 @@ local function findAttackSafeSpot(target, offset, preferUp)
 			local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
 			candidates[#candidates + 1] =
 				mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
-		end
-	end
-	for _, up in ipairs({ 14, 22, 32, 44 }) do
-		candidates[#candidates + 1] = mobPos + Vector3.new(0, yOff + up, 0)
-		for a = 0, 3 do
-			local angle = (a / 4) * math.pi * 2
-			candidates[#candidates + 1] =
-				mobPos + Vector3.new(math.cos(angle) * 8, yOff + up, math.sin(angle) * 8)
 		end
 	end
 
@@ -746,7 +720,22 @@ end
 local humanoid = character:FindFirstChildOfClass("Humanoid")
 if humanoid and humanoid.AutoRotate then humanoid.AutoRotate = false end
 local mechOverride, mechMode
-if MechanicsController then mechOverride, mechMode = MechanicsController:getOverride() end
+if MechanicsController and workspace:FindFirstChild("dungeon") and os.clock() > (self._mechCooldownUntil or 0) then
+mechOverride, mechMode = MechanicsController:getOverride()
+end
+if mechOverride then
+local mp = self._mechPos
+if mp and (mechOverride - mp).Magnitude < 6 then
+if os.clock() - (self._mechSince or 0) > 12 then
+self._mechCooldownUntil = os.clock() + 25
+self._mechPos = nil
+mechOverride = nil
+end
+else
+self._mechPos = mechOverride; self._mechSince = os.clock()
+end
+end
+if not mechOverride then self._mechPos = nil end
 if mechOverride then
 FLOAT_STATE = "mechanic"; self._dodgeTarget = nil; Decoy:setVisible(false); setTranspCached(character, 0)
 if hrp.Anchored then hrp.Anchored = false end
@@ -829,15 +818,7 @@ end
 Decoy:ensure(character); Decoy:moveTo(floatCF)
 local attacking = isMobAttackingNear(goal, self.DodgeRange or 60) or not spotIsClearEx(goal, 2, true)
 if attacking then
-if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 4) or not spotIsClearEx(self._dodgeTarget, 2, true) then
-local nowc = os.clock()
-if self._dodgeTarget then
-if nowc - (self._reWin or 0) > 5 then self._reWin = nowc; self._reN = 0 end
-self._reN = (self._reN or 0) + 1
-if self._reN >= 3 then self._upUntil = nowc + 8 end
-end
-self._dodgeTarget = findAttackSafeSpot(target, h, nowc < (self._upUntil or 0))
-end
+if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 4) or not spotIsClearEx(self._dodgeTarget, 2, true) then self._dodgeTarget = findAttackSafeSpot(target, h) end
 FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setTranspCached(character, 1)
 if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
@@ -937,16 +918,23 @@ local lit = false
 for _, c in ipairs(desc:GetChildren()) do
 if (c:IsA("Beam") or c:IsA("PointLight") or c:IsA("BillboardGui")) and c.Enabled then lit = true break end
 end
-if (lit or desc.Transparency < 0.95) and colorMatch(desc, ref) then consider(desc) end
+if (lit or desc.Transparency < 0.5) and colorMatch(desc, ref) then consider(desc) end
 end
 end
 end
+end
+local function activePart(p)
+if p.Transparency < 0.5 then return true end
+for _, c in ipairs(p:GetChildren()) do
+if (c:IsA("Beam") or c:IsA("PointLight") or c:IsA("BillboardGui")) and c.Enabled then return true end
+end
+return false
 end
 for _, d in ipairs(workspace:GetChildren()) do
-if d:IsA("BasePart") and SAFE_PART_NAMES[d.Name] then consider(d) end
+if d:IsA("BasePart") and SAFE_PART_NAMES[d.Name] and activePart(d) then consider(d) end
 if d:IsA("Model") and SAFE_PART_NAMES[d.Name] then
 local pp = d.PrimaryPart or d:FindFirstChildWhichIsA("BasePart")
-if pp then consider(pp) end
+if pp and activePart(pp) then consider(pp) end
 end
 end
 return best
@@ -1046,7 +1034,7 @@ if not hrp then return nil end
 local safe = nearestActiveSafeSpot(hrp.Position)
 if safe then
 MECH_STATE = "safe zone"
-return safe
+return safe, "ground"
 end
 local shield, shieldMode = self:_shieldPos()
 if shield then
