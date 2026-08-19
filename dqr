@@ -533,7 +533,7 @@ local SAFE_CLEARANCE = 18
 
 local function findAttackSafeSpot(target, offset, preferUp)
 	local mobPos = target.Position
-	local yOff = math.abs(offset)
+	local yOff = offset
 
 	if preferUp then
 		for _, up in ipairs({ 22, 32, 44 }) do
@@ -550,7 +550,8 @@ local function findAttackSafeSpot(target, offset, preferUp)
 	local candidates = {
 		mobPos + Vector3.new(0, yOff, 0),
 		mobPos,
-				mobPos + Vector3.new(0, offset, 0),
+		mobPos + Vector3.new(0, -offset, 0),
+		mobPos + Vector3.new(0, offset, 0),
 	}
 	for _, radius in ipairs({ 6, 10, 15, 20, 26, 32, 40 }) do
 		for a = 0, 7 do
@@ -572,7 +573,8 @@ local function findAttackSafeSpot(target, offset, preferUp)
 		local best, bestDist = nil, math.huge
 		for _, c in ipairs(candidates) do
 			local d = (c - mobPos).Magnitude
-			if d <= ATTACK_RANGE and spotIsClear(c, clearance) and spotIsClearEx(c, 2, true) then
+			local dFlat = Vector2.new(c.X - mobPos.X, c.Z - mobPos.Z).Magnitude
+			if dFlat <= ATTACK_RANGE and spotIsClear(c, clearance) and spotIsClearEx(c, 2, true) then
 				if d < bestDist then bestDist = d; best = c end
 			end
 		end
@@ -730,12 +732,14 @@ dest = mechOverride
 elseif mechMode == "ground" then
 dest = mechOverride + Vector3.new(0, 3, 0)
 else
-local h = math.max(self.Height, 13); local offset = math.abs(h); dest = mechOverride + Vector3.new(0, offset, 0)
+local h = math.max(self.Height, 13); dest = mechOverride + Vector3.new(0, h, 0)
 end
 hrp.CFrame = CFrame.new(dest); self._lastFloatCF = CFrame.new(dest); self._activeCF = CFrame.new(dest)
 return
 end
+local prevTarget = self._target
 local target = self:_pickTarget(hrp.Position)
+if target ~= prevTarget then self._dodgeTarget = nil end
 if not target then
 FLOAT_STATE = "no target"; self._dodgeTarget = nil; self._target = nil; local now = os.clock()
 if self._lastFloatCF then
@@ -762,12 +766,21 @@ self._extTop = 0
 pcall(function()
 local model = target:FindFirstAncestorOfClass("Model")
 if model then
-local bbCF, bbSize = model:GetBoundingBox()
-self._extTop = (bbCF.Position.Y + bbSize.Y * 0.5) - target.Position.Y
+local topY = target.Position.Y
+for _, p in ipairs(model:GetDescendants()) do
+if p:IsA("BasePart") then
+local s = p.Size
+if math.max(s.X, s.Y, s.Z) <= 30 then
+local t = p.Position.Y + s.Y * 0.5
+if t > topY then topY = t end
+end
+end
+end
+self._extTop = topY - target.Position.Y
 end
 end)
 end
-local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 35)); local offset = math.abs(h); local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
+local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 60)); local goal = target.Position + Vector3.new(0, h, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
 if flatLook.Magnitude < 0.05 then flatLook = Vector3.new(0, 0, -1) end
 local base = CFrame.lookAt(goal, goal + flatLook.Unit); local floatCF = base * CFrame.Angles(math.rad(-90), 0, 0)
 local function faceMobCF(pos)
@@ -928,13 +941,23 @@ end
 return best
 end
 function MechanicsController:_shieldPos()
+local this = self
 local ok, pos, mode = pcall(function()
 local ff = workspace:FindFirstChild("forceField")
 if ff then
-if ff:IsA("BasePart") then return ff.Position, "exact" end
-if ff:IsA("Model") then
-local pp = ff.PrimaryPart or ff:FindFirstChildWhichIsA("BasePart")
-if pp then return pp.Position, "exact" end
+local pp
+if ff:IsA("BasePart") then pp = ff
+elseif ff:IsA("Model") then pp = ff.PrimaryPart or ff:FindFirstChildWhichIsA("BasePart") end
+if pp then
+this._grabbed = this._grabbed or setmetatable({}, { __mode = "k" })
+if this._grabbed[ff] then return nil end
+local char = LocalPlayer.Character
+local hrp = char and char:FindFirstChild("HumanoidRootPart")
+if hrp and (hrp.Position - pp.Position).Magnitude <= 6 then
+this._grabbed[ff] = true
+return nil
+end
+return pp.Position, "exact"
 end
 end
 local arena = workspace:FindFirstChild("Arena")
