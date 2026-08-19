@@ -199,11 +199,46 @@ local TELEGRAPH_KEYWORDS = {
 	"precast", "hitbox", "hit box",
 	"tentacle", "tentacal", "tenticle", "kraken", "blade",
 	"swing", "slam", "slammed", "shockwave", "aoe", "beam",
+	"laser", "rock", "bomb", "spike", "missile", "rocket",
+	"explosion", "explosive", "crescent", "smite", "strike",
+	"crisscross", "criss", "wave", "flamewall", "freezing", "frozen",
+	"iceb", "icespike", "artillery", "cannon", "seeking", "blast",
+	"spinning", "swirly", "skyshot", "orbshot", "orbbeam", "orbprecast",
+	"movingorb", "moveorb", "bouncingorb", "passiveorb", "spiralorb",
+	"followorb", "mageorb", "bigcircle", "rotatingcircle", "frozencircle",
+	"groundaura", "horizontalline", "linkbeam", "lifestealbeam",
+	"oneshotbeam", "overheadcannon", "overheadring", "overheadrock",
+	"spearman", "shark", "genericneonball", "spinninglaser",
+	"crystaldrop", "geyser", "projectile", "stab", "onfire", "cursering",
 }
+local TELEGRAPH_IGNORE = {
+	"gui", "smoke", "highlight", "spawneffect", "forcefield",
+	"lookaway", "safespot", "passivehighlight", "mark",
+	"particle", "decal", "vfx", "glow",
+}
+local function nameIgnored(n)
+	for _, ig in ipairs(TELEGRAPH_IGNORE) do
+		if n:find(ig, 1, true) then return true end
+	end
+	return false
+end
 local function nameIsTelegraph(name)
 	local n = (name or ""):lower()
+	if nameIgnored(n) then return false end
 	for _, kw in ipairs(TELEGRAPH_KEYWORDS) do
 		if n:find(kw, 1, true) then return true end
+	end
+	return false
+end
+local function partIsTelegraph(part)
+	if not part:IsA("BasePart") then return false end
+	local n = part.Name:lower()
+	if nameIgnored(n) then return false end
+	if nameIsTelegraph(n) then return true end
+	local mat = part.Material
+	if (mat == Enum.Material.Neon or mat == Enum.Material.ForceField) and part.Anchored and not part.CanCollide then
+		local s = part.Size
+		if s.X >= 2 or s.Z >= 2 then return true end
 	end
 	return false
 end
@@ -217,7 +252,7 @@ local function getTelegraphParts()
 		local roots = { workspace }
 		for _, root in ipairs(roots) do
 			for _, d in ipairs(root:GetDescendants()) do
-				if d:IsA("BasePart") and nameIsTelegraph(d.Name) then
+				if partIsTelegraph(d) then
 					found[#found + 1] = d
 				end
 			end
@@ -269,15 +304,16 @@ local function spotIsClear(pos, margin)
 		if part.Parent and part.Transparency < 0.95 then
 			local s = part.Size
 			local cf = part.CFrame
+			local longAxis = math.max(s.X, s.Z)
+			local shortAxis = math.min(s.X, s.Z)
+			local isLong = longAxis > shortAxis * 3 and longAxis > 20
+			local horizR = isLong and (shortAxis * 0.5) or telegraphRadius(part)
 			local vHalf = math.abs(cf.UpVector.Y) * s.Y * 0.5
 				+ math.abs(cf.RightVector.Y) * s.X * 0.5
 				+ math.abs(cf.LookVector.Y) * s.Z * 0.5
-			if pos.Y > part.Position.Y + vHalf + 12 then
+			if pos.Y > part.Position.Y + vHalf + math.max(12, horizR + margin) then
 			else
-			local longAxis = math.max(s.X, s.Z)
-			local shortAxis = math.min(s.X, s.Z)
-			if longAxis > shortAxis * 3 and longAxis > 20 then
-				local cf = part.CFrame
+			if isLong then
 				local dir = (s.X >= s.Z) and cf.RightVector or cf.LookVector
 				local dirFlat = Vector2.new(dir.X, dir.Z)
 				if dirFlat.Magnitude < 0.5 then
@@ -488,7 +524,7 @@ local mechOverride = MechanicsController and MechanicsController:getOverride()
 if mechOverride then
 FLOAT_STATE = "mechanic"; self._dodgeTarget = nil; Decoy:setVisible(false); setLocalTransparency(character, 0)
 if hrp.Anchored then hrp.Anchored = false end
-hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero; local offset = self.Below and -self.Height or self.Height; local dest = mechOverride + Vector3.new(0, offset, 0); hrp.CFrame = CFrame.new(dest); self._lastFloatCF = CFrame.new(dest); self._activeCF = CFrame.new(dest)
+hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero; local h = math.max(self.Height, 13); local offset = self.Below and -h or h; local dest = mechOverride + Vector3.new(0, offset, 0); hrp.CFrame = CFrame.new(dest); self._lastFloatCF = CFrame.new(dest); self._activeCF = CFrame.new(dest)
 return
 end
 local target = self:_pickTarget(hrp.Position)
@@ -511,7 +547,7 @@ if cam and humanoid then pcall(function() cam.CameraSubject = humanoid end) end
 Decoy:destroy()
 return
 end
-self._holdSince = nil; local offset = self.Below and -self.Height or self.Height; local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
+self._holdSince = nil; local h = math.max(self.Height, 13); local offset = self.Below and -h or h; local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
 if flatLook.Magnitude < 0.05 then flatLook = Vector3.new(0, 0, -1) end
 local base = CFrame.lookAt(goal, goal + flatLook.Unit); local floatCF = base * CFrame.Angles(math.rad(-90), 0, 0)
 local function faceMobCF(pos)
@@ -522,7 +558,7 @@ end
 Decoy:ensure(character); Decoy:moveTo(floatCF)
 local attacking = isMobAttackingNear(goal, self.DodgeRange or 60)
 if attacking then
-if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 6) then self._dodgeTarget = findAttackSafeSpot(target, self.Height, self.Below) end
+if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 6) then self._dodgeTarget = findAttackSafeSpot(target, math.max(self.Height, 13), self.Below) end
 FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setLocalTransparency(character, 1)
 if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
@@ -1488,8 +1524,6 @@ if type(item) == "table" then
 totalSeen = totalSeen + 1; local rank = rarityRank(item.rarity)
 if isUnequipped(item) and rank <= maxRank then
 local num = tonumber(item.uniqueItemNum)
-or tonumber(tostring(key):match("(%d+)$"))
-or tonumber(tostring(key):sub(info.numStart))
 if num then table.insert(payload[info.t], num); count = count + 1 end
 end
 end
