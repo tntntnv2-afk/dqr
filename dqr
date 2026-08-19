@@ -439,8 +439,11 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 				local dir = (s.X >= s.Z) and cf.RightVector or cf.LookVector
 				local dirFlat = Vector2.new(dir.X, dir.Z)
 				if dirFlat.Magnitude < 0.5 then
+					local extX = math.abs(cf.RightVector.X) * s.X * 0.5 + math.abs(cf.UpVector.X) * s.Y * 0.5 + math.abs(cf.LookVector.X) * s.Z * 0.5
+					local extZ = math.abs(cf.RightVector.Z) * s.X * 0.5 + math.abs(cf.UpVector.Z) * s.Y * 0.5 + math.abs(cf.LookVector.Z) * s.Z * 0.5
+					local fr = math.max(extX, extZ)
 					local pflat = Vector2.new(part.Position.X, part.Position.Z)
-					if (pflat - flat).Magnitude <= shortAxis * 0.5 + margin then
+					if (pflat - flat).Magnitude <= fr + margin then
 						return false
 					end
 				else
@@ -807,7 +810,7 @@ local pickupActive = pickup and pickup.Transparency < 0.5
 local fireActive = fireRing and fireRing.Transparency < 0.5
 if not (pickupActive or fireActive) then this._cannonPhase = nil return nil end
 if this._cannonPhase ~= "fire" and pickupActive then
-local d = (Vector2.new(pickup.Position.X, pickup.Position.Z) - Vector2.new(hrp.Position.X, hrp.Position.Z)).Magnitude
+local d = (pickup.Position - hrp.Position).Magnitude
 if d <= 5 then this._cannonPhase = "fire" else return pickup.Position end
 end
 if fireActive then return fireRing.Position end
