@@ -167,13 +167,16 @@ local function getNearestMobRoot(fromPosition)
 local nearestRoot, nearestDist = nil, math.huge
 for _, mob in ipairs(getMobs()) do
 if mob.Parent then
+local hum = mob:FindFirstChildOfClass("Humanoid")
+if not hum or hum.Health > 0 then
 local root = mob:FindFirstChild("HumanoidRootPart")
 or mob:FindFirstChild("hitBox")
 or mob.PrimaryPart
 or mob:FindFirstChildWhichIsA("BasePart")
-if root then
+if root and (fromPosition.Y - root.Position.Y) <= 120 then
 local dist = (root.Position - fromPosition).Magnitude
 if dist < nearestDist then nearestDist = dist; nearestRoot = root end
+end
 end
 end
 end
@@ -697,6 +700,14 @@ Decoy:destroy()
 end
 function FloatController:_pickTarget(fromPos)
 local cur = self._target
+if cur and cur.Parent then
+local mob = cur:FindFirstAncestorOfClass("Model")
+local hum = mob and mob:FindFirstChildOfClass("Humanoid")
+if (hum and hum.Health <= 0) or (fromPos.Y - cur.Position.Y) > 120 then
+self._target = nil
+cur = nil
+end
+end
 if cur and cur.Parent then
 local curDist = (cur.Position - fromPos).Magnitude; local nearest = getNearestMobRoot(fromPos)
 if nearest and nearest ~= cur then
@@ -1261,7 +1272,7 @@ end
 function KeyController:_shouldFire()
 if StallController._stalling then return false end
 if not self.OnlyInRange then return true end
-if FLOAT_STATE == "DODGE" or FLOAT_STATE == "BAIT" or FLOAT_STATE == "mechanic" then return true end
+if FLOAT_STATE == "DODGE" or FLOAT_STATE == "BAIT" or FLOAT_STATE == "mechanic" or FLOAT_STATE == "travel" then return true end
 local character = LocalPlayer.Character; local hrp = character and character:FindFirstChild("HumanoidRootPart")
 if not hrp then return false end
 return getNearestMobDistance(hrp.Position) <= self:_effectiveRange()
