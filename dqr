@@ -527,134 +527,45 @@ local function spotIsClear(pos, margin)
 	return spotIsClearEx(pos, margin, false)
 end
 
-local MechanicsController
-local FloatController = {
-Enabled = false, Height = 10, DodgeRange = 60, _conn = nil,
-}
-local function markAbilityUsed()
-LAST_ABILITY_USE = os.clock()
-end
-local FLOAT_STATE = "off"; local MECH_STATE = "idle"
-local Decoy = { model = nil, humanoid = nil, visible = false }
-local _lastTranspChar, _lastTranspVal = nil, nil
-local function setLocalTransparency(character, value)
-_lastTranspChar = character; _lastTranspVal = value
-for _, p in ipairs(character:GetDescendants()) do
-if p:IsA("BasePart") or p:IsA("Decal") then
-pcall(function() p.LocalTransparencyModifier = value end)
-end
-end
-end
-local function setTranspCached(character, value)
-if _lastTranspChar == character and _lastTranspVal == value then return end
-setLocalTransparency(character, value)
-end
-function Decoy:ensure(character)
-if self.model and self.model.Parent then return end
-local ok, clone = pcall(function()
-local c = character:Clone()
-for _, d in ipairs(c:GetDescendants()) do
-if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("ModuleScript") then
-d:Destroy()
-elseif d:IsA("BasePart") then
-d.Anchored = true; d.CanCollide = false; d.CanQuery = false; d.CanTouch = false
-end
-end
-c.Name = "DexoriDecoy"; c.Parent = workspace
-return c
-end)
-self.model = ok and clone or nil; self.humanoid = self.model and self.model:FindFirstChildOfClass("Humanoid") or nil
-if self.humanoid then
-pcall(function()
-self.humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None; self.humanoid.EvaluateStateMachine = false
-end)
-end
-local cam = workspace.CurrentCamera
-if cam and self.humanoid then
-pcall(function() cam.CameraSubject = self.humanoid end)
-end
-self.visible = false; self:setVisible(false)
-end
-function Decoy:moveTo(cf)
-if self.model then pcall(function() self.model:PivotTo(cf) end) end
-end
-function Decoy:setVisible(on)
-if self.visible == on or not self.model then return end
-self.visible = on; local mod = on and 0 or 1
-for _, p in ipairs(self.model:GetDescendants()) do
-if p:IsA("BasePart") or p:IsA("Decal") then
-pcall(function() p.LocalTransparencyModifier = mod end)
-end
-end
-end
-function Decoy:destroy()
-if self.model then
-pcall(function() self.model:Destroy() end)
-end
-self.model = nil; self.humanoid = nil; self.visible = false
-end
-function FloatController:Stop()
-if self._conn then self._conn:Disconnect() self._conn = nil end
-if self._physConn then self._physConn:Disconnect() self._physConn = nil end
-self._dodgeTarget = nil; self._target = nil; self._lastFloatCF = nil; self._holdSince = nil; self._activeCF = nil; local character = LocalPlayer.Character; local hrp = character and character:FindFirstChild("HumanoidRootPart")
-if hrp then hrp.Anchored = false end
-if character then setLocalTransparency(character, 0) end
-local cam = workspace.CurrentCamera; local hum = character and character:FindFirstChildOfClass("Humanoid")
-if hum then pcall(function() hum.AutoRotate = true end) end
-if cam and hum then pcall(function() cam.CameraSubject = hum end) end
-Decoy:destroy()
-end
-function FloatController:_pickTarget(fromPos)
-local cur = self._target
-if cur and cur.Parent then
-local curDist = (cur.Position - fromPos).Magnitude; local nearest = getNearestMobRoot(fromPos)
-if nearest and nearest ~= cur then
-local nearDist = (nearest.Position - fromPos).Magnitude
-if nearDist < curDist - 12 then
-self._target = nearest
-return nearest
-end
-end
-return cur
-end
-local nearest = getNearestMobRoot(fromPos); self._target = nearest
-return nearest
-end
 local ATTACK_RANGE = 42
 
 local SAFE_CLEARANCE = 18
 
-local function findAttackSafeSpot(target, offset, preferUp)
+local function findAttackSafeSpot(target, offset, below, preferUp)
 	local mobPos = target.Position
-	-- Every dodge destination remains above the mob; never use a below offset.
-	local safeY = math.max(offset or 20, 20)
+	local yOff = below and -offset or offset
+
 	if preferUp then
 		for _, up in ipairs({ 22, 32, 44 }) do
-			local c = mobPos + Vector3.new(0, safeY + up, 0)
+			local c = mobPos + Vector3.new(0, yOff + up, 0)
 			if spotIsClear(c, 6) and spotIsClearEx(c, 2, true) then return c end
 			for a = 0, 3 do
 				local angle = (a / 4) * math.pi * 2
-				local c2 = mobPos + Vector3.new(math.cos(angle) * 8, safeY + up, math.sin(angle) * 8)
+				local c2 = mobPos + Vector3.new(math.cos(angle) * 8, yOff + up, math.sin(angle) * 8)
 				if spotIsClear(c2, 6) and spotIsClearEx(c2, 2, true) then return c2 end
 			end
 		end
 	end
+
 	local candidates = {
-		mobPos + Vector3.new(0, safeY, 0),
+		mobPos + Vector3.new(0, yOff, 0),
+		mobPos,
+		mobPos + Vector3.new(0, -offset, 0),
+		mobPos + Vector3.new(0, offset, 0),
 	}
 	for _, radius in ipairs({ 6, 10, 15, 20, 26, 32, 40 }) do
 		for a = 0, 7 do
 			local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
 			candidates[#candidates + 1] =
-				mobPos + Vector3.new(math.cos(angle) * radius, safeY, math.sin(angle) * radius)
+				mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
 		end
 	end
 	for _, up in ipairs({ 14, 22, 32, 44 }) do
-		candidates[#candidates + 1] = mobPos + Vector3.new(0, safeY + up, 0)
+		candidates[#candidates + 1] = mobPos + Vector3.new(0, yOff + up, 0)
 		for a = 0, 3 do
 			local angle = (a / 4) * math.pi * 2
 			candidates[#candidates + 1] =
-				mobPos + Vector3.new(math.cos(angle) * 8, safeY + up, math.sin(angle) * 8)
+				mobPos + Vector3.new(math.cos(angle) * 8, yOff + up, math.sin(angle) * 8)
 		end
 	end
 
@@ -673,7 +584,7 @@ local function findAttackSafeSpot(target, offset, preferUp)
 		for a = 0, 7 do
 			local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
 			candidates[#candidates + 1] =
-				mobPos + Vector3.new(math.cos(angle) * radius, safeY, math.sin(angle) * radius)
+				mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
 		end
 	end
 	local best, bestDist = nil, math.huge
@@ -690,11 +601,11 @@ local function findAttackSafeSpot(target, offset, preferUp)
 		local clear = nearestTelegraphDist(c)
 		if clear > farScore then farScore = clear; far = c end
 	end
-	return far or (mobPos + Vector3.new(0, safeY, 0))
+	return far or (mobPos + Vector3.new(0, yOff, 0))
 end
 local MechanicsController
 local FloatController = {
-Enabled = false, Height = 10, DodgeRange = 60, _conn = nil,
+Enabled = false, Height = 10, Below = false, DodgeRange = 60, _conn = nil,
 }
 local function markAbilityUsed()
 LAST_ABILITY_USE = os.clock()
@@ -820,7 +731,7 @@ dest = mechOverride
 elseif mechMode == "ground" then
 dest = mechOverride + Vector3.new(0, 3, 0)
 else
-local h = math.max(self.Height, 13); dest = mechOverride + Vector3.new(0, h, 0)
+local h = math.max(self.Height, 13); local offset = self.Below and -h or h; dest = mechOverride + Vector3.new(0, offset, 0)
 end
 hrp.CFrame = CFrame.new(dest); self._lastFloatCF = CFrame.new(dest); self._activeCF = CFrame.new(dest)
 return
@@ -857,7 +768,7 @@ self._extTop = (bbCF.Position.Y + bbSize.Y * 0.5) - target.Position.Y
 end
 end)
 end
-local h = math.max(self.Height, 20); local topClearance = math.max((self._extTop or 0) + 8, 20); local goal = target.Position + Vector3.new(0, h + topClearance, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
+local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 35)); local offset = self.Below and -h or h; local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
 if flatLook.Magnitude < 0.05 then flatLook = Vector3.new(0, 0, -1) end
 local base = CFrame.lookAt(goal, goal + flatLook.Unit); local floatCF = base * CFrame.Angles(math.rad(-90), 0, 0)
 local function faceMobCF(pos)
@@ -867,38 +778,50 @@ return CFrame.lookAt(pos, target.Position)
 end
 Decoy:ensure(character); Decoy:moveTo(floatCF)
 local attacking = isMobAttackingNear(goal, self.DodgeRange or 60) or not spotIsClearEx(goal, 2, true)
--- Keep the missile/projectile dodge system, but force every dodge point to remain above the mob.
-FLOAT_STATE = attacking and "DODGE" or "travel"
 if attacking then
-    local nowc = os.clock()
-    local preferUp = nowc < (self._upUntil or 0)
-    local dodge = findAttackSafeSpot(target, h + topClearance, preferUp)
-    if dodge then
-        -- Hard safety clamp: never allow a dodge destination at or below the mob.
-        local minY = target.Position.Y + math.max(h + topClearance, 20)
-        dodge = Vector3.new(dodge.X, math.max(dodge.Y, minY), dodge.Z)
-        self._dodgeTarget = dodge
-    else
-        self._dodgeTarget = goal
-    end
-else
-    self._dodgeTarget = nil
+if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 4) or not spotIsClearEx(self._dodgeTarget, 2, true) then
+local nowc = os.clock()
+if self._dodgeTarget then
+if nowc - (self._reWin or 0) > 5 then self._reWin = nowc; self._reN = 0 end
+self._reN = (self._reN or 0) + 1
+if self._reN >= 3 then self._upUntil = nowc + 8 end
 end
-Decoy:setVisible(not attacking); setTranspCached(character, attacking and 1 or 0)
+self._dodgeTarget = findAttackSafeSpot(target, h, self.Below, nowc < (self._upUntil or 0))
+end
+FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setTranspCached(character, 1)
 if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
-local cur = hrp.Position
-local destination = self._dodgeTarget or goal
-local flatDelta = Vector3.new(destination.X - cur.X, 0, destination.Z - cur.Z)
+if self._dodgeTarget then
+local dcur = hrp.Position
+local dflat = Vector3.new(self._dodgeTarget.X - dcur.X, 0, self._dodgeTarget.Z - dcur.Z)
 local cf
-if flatDelta.Magnitude > 40 then
-    local nextPos = cur + flatDelta.Unit * 30
-    local ny = math.max(cur.Y, destination.Y)
-    cf = faceMobCF(Vector3.new(nextPos.X, ny, nextPos.Z))
+if dflat.Magnitude > 40 then
+local nextPos = dcur + dflat.Unit * 30
+local ny = math.max(dcur.Y, self._dodgeTarget.Y)
+cf = faceMobCF(Vector3.new(nextPos.X, ny, nextPos.Z))
 else
-    cf = faceMobCF(destination)
+cf = faceMobCF(self._dodgeTarget)
 end
 hrp.CFrame = cf; self._lastFloatCF = cf; self._activeCF = cf
+end
+else
+FLOAT_STATE = "BAIT"; self._dodgeTarget = nil; Decoy:setVisible(false); setTranspCached(character, 0)
+if hrp.Anchored then hrp.Anchored = false end
+hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
+local cf
+local cur = hrp.Position
+local flatDelta = Vector3.new(goal.X - cur.X, 0, goal.Z - cur.Z)
+if flatDelta.Magnitude > 40 then
+FLOAT_STATE = "travel"
+local nextPos = cur + flatDelta.Unit * 30
+local ny = math.max(cur.Y, goal.Y)
+nextPos = Vector3.new(nextPos.X, ny, nextPos.Z)
+cf = faceMobCF(nextPos)
+else
+cf = faceMobCF(goal)
+end
+hrp.CFrame = cf; self._lastFloatCF = cf; self._activeCF = cf
+end
 end)
 end
 function FloatController:SetEnabled(on)
@@ -1989,6 +1912,7 @@ end
 local CombatBox = Tabs.Main:AddLeftGroupbox("Combat")
 CombatBox:AddToggle("FloatAboveMobs", { Text = "Auto Play", Default = false, Callback = function(v) State.FloatAboveMobs = v applyFeatures() end, })
 CombatBox:AddSlider("HoverHeight", { Text = "Hover Height", Default = 10, Min = 10, Max = 30, Rounding = 1, Suffix = " studs", Callback = function(v) FloatController.Height = v end, })
+CombatBox:AddToggle("FloatBelow", { Text = "Float Below", Default = false, Callback = function(v) FloatController.Below = v end, })
 CombatBox:AddSlider("DodgeRange", { Text = "Dodge Range", Default = 60, Min = 10, Max = 150, Rounding = 0, Suffix = " studs", Callback = function(v) FloatController.DodgeRange = v end, })
 CombatBox:AddToggle("AutoMechanics", { Text = "Auto Mechanics", Default = false, Callback = function(v) MechanicsController:SetEnabled(v) end, })
 CombatBox:AddDivider()
