@@ -466,44 +466,43 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 			local s = part.Size
 			local rdx = pos.X - part.Position.X
 			local rdz = pos.Z - part.Position.Z
-			local reach = math.max(s.X, s.Z) * 0.5 + margin + 10
+			local reach = math.max(s.X, s.Y, s.Z) * 0.5 + margin + 10
 			if rdx * rdx + rdz * rdz <= reach * reach then
 			local cf = part.CFrame
-			local longAxis = math.max(s.X, s.Z)
-			local shortAxis = math.min(s.X, s.Z)
-			local isLong = longAxis > shortAxis * 3 and longAxis > 20
-			local horizR = isLong and (shortAxis * 0.5) or telegraphRadius(part)
-			local vHalf = math.abs(cf.UpVector.Y) * s.Y * 0.5
-				+ math.abs(cf.RightVector.Y) * s.X * 0.5
-				+ math.abs(cf.LookVector.Y) * s.Z * 0.5
+			local rv, uv, lv = cf.RightVector, cf.UpVector, cf.LookVector
+			local hR = math.sqrt(rv.X * rv.X + rv.Z * rv.Z) * s.X
+			local hU = math.sqrt(uv.X * uv.X + uv.Z * uv.Z) * s.Y
+			local hL = math.sqrt(lv.X * lv.X + lv.Z * lv.Z) * s.Z
+			local domLen, domVec = hR, rv
+			if hU > domLen then domLen, domVec = hU, uv end
+			if hL > domLen then domLen, domVec = hL, lv end
+			local perpW = hR + hU + hL - domLen
+			local vHalf = math.abs(rv.Y) * s.X * 0.5 + math.abs(uv.Y) * s.Y * 0.5 + math.abs(lv.Y) * s.Z * 0.5
+			local n = part.Name:lower()
+			local bump = 0
+			if n:find("tentacle") or n:find("kraken") or n:find("swing")
+			or n:find("slam") or n:find("blade") then
+				bump = 8
+			end
+			local isLong = domLen > perpW * 3 and domLen > 20
+			local horizR = isLong and (perpW * 0.5 + bump) or (domLen * 0.5 + 4 + bump)
 			if pos.Y > part.Position.Y + vHalf + math.max(isLong and 18 or 12, horizR + margin) then
 			else
-			if isLong then
-				local dir = (s.X >= s.Z) and cf.RightVector or cf.LookVector
-				local dirFlat = Vector2.new(dir.X, dir.Z)
-				if dirFlat.Magnitude < 0.5 then
-					local extX = math.abs(cf.RightVector.X) * s.X * 0.5 + math.abs(cf.UpVector.X) * s.Y * 0.5 + math.abs(cf.LookVector.X) * s.Z * 0.5
-					local extZ = math.abs(cf.RightVector.Z) * s.X * 0.5 + math.abs(cf.UpVector.Z) * s.Y * 0.5 + math.abs(cf.LookVector.Z) * s.Z * 0.5
-					local fr = math.max(extX, extZ)
-					local pflat = Vector2.new(part.Position.X, part.Position.Z)
-					if (pflat - flat).Magnitude <= fr + margin then
-						return false
-					end
-				else
-					dirFlat = dirFlat.Unit
-					local center = Vector2.new(part.Position.X, part.Position.Z)
-					local rel = flat - center
-					local along = rel.X * dirFlat.X + rel.Y * dirFlat.Y
-					local half = longAxis * 0.5
-					if along > half then along = half elseif along < -half then along = -half end
-					local closest = center + dirFlat * along
-					if (flat - closest).Magnitude <= shortAxis * 0.5 + margin then
-						return false
-					end
+			local dirFlat = Vector2.new(domVec.X, domVec.Z)
+			if isLong and dirFlat.Magnitude >= 0.001 then
+				dirFlat = dirFlat.Unit
+				local center = Vector2.new(part.Position.X, part.Position.Z)
+				local rel = flat - center
+				local along = rel.X * dirFlat.X + rel.Y * dirFlat.Y
+				local half = domLen * 0.5
+				if along > half then along = half elseif along < -half then along = -half end
+				local closest = center + dirFlat * along
+				if (flat - closest).Magnitude <= horizR + margin then
+					return false
 				end
 			else
 				local pflat = Vector2.new(part.Position.X, part.Position.Z)
-				if (pflat - flat).Magnitude <= telegraphRadius(part) + margin then
+				if (pflat - flat).Magnitude <= horizR + margin then
 					return false
 				end
 			end
@@ -732,7 +731,19 @@ if cam and humanoid then pcall(function() cam.CameraSubject = humanoid end) end
 Decoy:destroy()
 return
 end
-self._holdSince = nil; local h = math.max(self.Height, 13); local offset = self.Below and -h or h; local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
+self._holdSince = nil
+if self._extTarget ~= target then
+self._extTarget = target
+self._extY = 0
+pcall(function()
+local model = target.Parent
+if model and model:IsA("Model") then
+local ext = model:GetExtentsSize()
+self._extY = ext.Y * 0.5
+end
+end)
+end
+local h = math.max(self.Height, 13, (self._extY or 0) + 6); local offset = self.Below and -h or h; local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
 if flatLook.Magnitude < 0.05 then flatLook = Vector3.new(0, 0, -1) end
 local base = CFrame.lookAt(goal, goal + flatLook.Unit); local floatCF = base * CFrame.Angles(math.rad(-90), 0, 0)
 local function faceMobCF(pos)
@@ -743,7 +754,7 @@ end
 Decoy:ensure(character); Decoy:moveTo(floatCF)
 local attacking = isMobAttackingNear(goal, self.DodgeRange or 60) or not spotIsClearEx(goal, 2, true)
 if attacking then
-if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 6) or not spotIsClearEx(self._dodgeTarget, 2, true) then self._dodgeTarget = findAttackSafeSpot(target, math.max(self.Height, 13), self.Below) end
+if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 6) or not spotIsClearEx(self._dodgeTarget, 2, true) then self._dodgeTarget = findAttackSafeSpot(target, h, self.Below) end
 FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setTranspCached(character, 1)
 if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
