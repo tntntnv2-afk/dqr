@@ -469,6 +469,22 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 			local reach = math.max(s.X, s.Y, s.Z) * 0.5 + margin + 10
 			if rdx * rdx + rdz * rdz <= reach * reach then
 			local cf = part.CFrame
+			local n = part.Name:lower()
+			local bump = 0
+			if n:find("tentacle") or n:find("kraken") or n:find("swing")
+			or n:find("slam") or n:find("blade") then
+				bump = 8
+			end
+			local mx = math.max(s.X, s.Y, s.Z)
+			local mn = math.min(s.X, s.Y, s.Z)
+			local md = s.X + s.Y + s.Z - mx - mn
+			if md > mx * 0.6 and mn < md * 0.34 then
+				local dy = pos.Y - part.Position.Y
+				local d3 = math.sqrt(rdx * rdx + dy * dy + rdz * rdz)
+				if d3 <= mx * 0.5 + 4 + bump + margin then
+					return false
+				end
+			else
 			local rv, uv, lv = cf.RightVector, cf.UpVector, cf.LookVector
 			local hR = math.sqrt(rv.X * rv.X + rv.Z * rv.Z) * s.X
 			local hU = math.sqrt(uv.X * uv.X + uv.Z * uv.Z) * s.Y
@@ -478,12 +494,6 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 			if hL > domLen then domLen, domVec = hL, lv end
 			local perpW = hR + hU + hL - domLen
 			local vHalf = math.abs(rv.Y) * s.X * 0.5 + math.abs(uv.Y) * s.Y * 0.5 + math.abs(lv.Y) * s.Z * 0.5
-			local n = part.Name:lower()
-			local bump = 0
-			if n:find("tentacle") or n:find("kraken") or n:find("swing")
-			or n:find("slam") or n:find("blade") then
-				bump = 8
-			end
 			local isLong = domLen > perpW * 3 and domLen > 20
 			local horizR = isLong and (perpW * 0.5 + bump) or (domLen * 0.5 + 4 + bump)
 			if pos.Y > part.Position.Y + vHalf + math.max(isLong and 18 or 12, horizR + margin) then
@@ -505,6 +515,7 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 				if (pflat - flat).Magnitude <= horizR + margin then
 					return false
 				end
+			end
 			end
 			end
 			end
