@@ -531,9 +531,9 @@ local ATTACK_RANGE = 42
 
 local SAFE_CLEARANCE = 18
 
-local function findAttackSafeSpot(target, offset, below, preferUp)
+local function findAttackSafeSpot(target, offset, preferUp)
 	local mobPos = target.Position
-	local yOff = below and -offset or offset
+	local yOff = math.abs(offset)
 
 	if preferUp then
 		for _, up in ipairs({ 22, 32, 44 }) do
@@ -550,8 +550,7 @@ local function findAttackSafeSpot(target, offset, below, preferUp)
 	local candidates = {
 		mobPos + Vector3.new(0, yOff, 0),
 		mobPos,
-		mobPos + Vector3.new(0, -offset, 0),
-		mobPos + Vector3.new(0, offset, 0),
+				mobPos + Vector3.new(0, offset, 0),
 	}
 	for _, radius in ipairs({ 6, 10, 15, 20, 26, 32, 40 }) do
 		for a = 0, 7 do
@@ -605,7 +604,7 @@ local function findAttackSafeSpot(target, offset, below, preferUp)
 end
 local MechanicsController
 local FloatController = {
-Enabled = false, Height = 10, Below = false, DodgeRange = 60, _conn = nil,
+Enabled = false, Height = 10, DodgeRange = 60, _conn = nil,
 }
 local function markAbilityUsed()
 LAST_ABILITY_USE = os.clock()
@@ -731,7 +730,7 @@ dest = mechOverride
 elseif mechMode == "ground" then
 dest = mechOverride + Vector3.new(0, 3, 0)
 else
-local h = math.max(self.Height, 13); local offset = self.Below and -h or h; dest = mechOverride + Vector3.new(0, offset, 0)
+local h = math.max(self.Height, 13); local offset = math.abs(h); dest = mechOverride + Vector3.new(0, offset, 0)
 end
 hrp.CFrame = CFrame.new(dest); self._lastFloatCF = CFrame.new(dest); self._activeCF = CFrame.new(dest)
 return
@@ -768,7 +767,7 @@ self._extTop = (bbCF.Position.Y + bbSize.Y * 0.5) - target.Position.Y
 end
 end)
 end
-local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 35)); local offset = self.Below and -h or h; local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
+local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 35)); local offset = math.abs(h); local goal = target.Position + Vector3.new(0, offset, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
 if flatLook.Magnitude < 0.05 then flatLook = Vector3.new(0, 0, -1) end
 local base = CFrame.lookAt(goal, goal + flatLook.Unit); local floatCF = base * CFrame.Angles(math.rad(-90), 0, 0)
 local function faceMobCF(pos)
@@ -786,7 +785,7 @@ if nowc - (self._reWin or 0) > 5 then self._reWin = nowc; self._reN = 0 end
 self._reN = (self._reN or 0) + 1
 if self._reN >= 3 then self._upUntil = nowc + 8 end
 end
-self._dodgeTarget = findAttackSafeSpot(target, h, self.Below, nowc < (self._upUntil or 0))
+self._dodgeTarget = findAttackSafeSpot(target, h, nowc < (self._upUntil or 0))
 end
 FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setTranspCached(character, 1)
 if hrp.Anchored then hrp.Anchored = false end
@@ -1912,7 +1911,6 @@ end
 local CombatBox = Tabs.Main:AddLeftGroupbox("Combat")
 CombatBox:AddToggle("FloatAboveMobs", { Text = "Auto Play", Default = false, Callback = function(v) State.FloatAboveMobs = v applyFeatures() end, })
 CombatBox:AddSlider("HoverHeight", { Text = "Hover Height", Default = 10, Min = 10, Max = 30, Rounding = 1, Suffix = " studs", Callback = function(v) FloatController.Height = v end, })
-CombatBox:AddToggle("FloatBelow", { Text = "Float Below", Default = false, Callback = function(v) FloatController.Below = v end, })
 CombatBox:AddSlider("DodgeRange", { Text = "Dodge Range", Default = 60, Min = 10, Max = 150, Rounding = 0, Suffix = " studs", Callback = function(v) FloatController.DodgeRange = v end, })
 CombatBox:AddToggle("AutoMechanics", { Text = "Auto Mechanics", Default = false, Callback = function(v) MechanicsController:SetEnabled(v) end, })
 CombatBox:AddDivider()
