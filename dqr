@@ -1307,6 +1307,57 @@ local function getLeaderstat(name)
 local ls = LocalPlayer:FindFirstChild("leaderstats"); local v = ls and ls:FindFirstChild(name)
 return v and v.Value or 0
 end
+local function parseAbbrev(s)
+local num, suf = tostring(s):match("^([%d%.]+)(%a?)$")
+if not num then return nil end
+local n = tonumber(num)
+if not n then return nil end
+suf = suf:upper()
+if suf == "K" then n = n * 1e3 elseif suf == "M" then n = n * 1e6 elseif suf == "B" then n = n * 1e9 end
+return n
+end
+local _expLabel
+local function getExpInfo()
+local function readLabel(lbl)
+local cur, mx = tostring(lbl.Text):match("^([%d%.]+%a?)/([%d%.]+%a?)$")
+if not cur then return nil end
+return parseAbbrev(cur), parseAbbrev(mx)
+end
+if _expLabel and _expLabel.Parent then
+local c, m = readLabel(_expLabel)
+if c and m then return c, m end
+_expLabel = nil
+end
+local ok = pcall(function()
+local pg = LocalPlayer:FindFirstChild("PlayerGui")
+if not pg then return end
+for _, d in ipairs(pg:GetDescendants()) do
+if d:IsA("TextLabel") then
+local c, m = readLabel(d)
+if c and m then
+local tagged = d.Name:lower():find("exp") or (d.Parent and d.Parent.Name:lower():find("exp"))
+if not tagged and d.Parent then
+for _, sib in ipairs(d.Parent:GetChildren()) do
+if sib:IsA("TextLabel") and tostring(sib.Text):upper() == "EXP" then tagged = true break end
+end
+end
+if tagged then _expLabel = d return end
+end
+end
+end
+end)
+if _expLabel then
+local c, m = readLabel(_expLabel)
+if c and m then return c, m end
+end
+return nil
+end
+local function fmtDur(secs)
+secs = math.floor(secs)
+local h = math.floor(secs / 3600); local m = math.floor((secs % 3600) / 60)
+if h > 0 then return string.format("%dh %dm", h, m) end
+return string.format("%dm %ds", m, secs % 60)
+end
 local function collectDungeonData()
 local data = {}
 local dn = workspace:FindFirstChild("dungeonName")
@@ -1689,7 +1740,7 @@ end)
 end
 if os.clock() - (self._bodyTick or 0) < 0.3 then return end
 self._bodyTick = os.clock(); local pg = LocalPlayer:FindFirstChild("PlayerGui"); local menu = pg and pg:FindFirstChild("Menu"); local finished = isDungeonFinished(); local open = ((menu and menu:IsA("ScreenGui") and menu.Enabled) or false) or finished; local inDungeon = workspace:FindFirstChild("dungeon") ~= nil
-if inDungeon and not self._runStart then self._runStart = os.clock(); self._runGold = getLeaderstat("Gold"); self._runWon = false; local dn = workspace:FindFirstChild("dungeonName"); self._runName = (dn and dn.Value) or "?" end
+if inDungeon and not self._runStart then self._runStart = os.clock(); self._runGold = getLeaderstat("Gold"); self._runWon = false; local dn = workspace:FindFirstChild("dungeonName"); self._runName = (dn and dn.Value) or "?"; local ec, em = getExpInfo(); self._runExpCur = ec; self._runExpMax = em end
 if open and not self._menuWasOpen then
 self.Runs = self.Runs + 1; self._runWon = true; persist()
 if self._runStart and self._runName then
@@ -1698,6 +1749,20 @@ if secs > 5 and gold >= 0 then
 local rate = gold / (secs / 3600)
 local d = self.PerDungeon[self._runName] or { rate = 0, n = 0 }
 d.rate = (d.rate * d.n + rate) / (d.n + 1); d.n = d.n + 1; self.PerDungeon[self._runName] = d
+end
+if State.DeathAlerts then
+local ec, em = getExpInfo()
+if ec and em and self._runExpCur and self._runExpMax then
+local gained
+if ec >= self._runExpCur then gained = ec - self._runExpCur
+else gained = (self._runExpMax - self._runExpCur) + ec end
+if gained > 0 then
+local remaining = em - ec
+local runsLeft = math.ceil(remaining / gained)
+local eta = runsLeft * secs
+alertWebhook("Run Complete", string.format("%s cleared %s in %s | +%s XP | Est. level up: %d more runs (~%s)", getRealName(), tostring(self._runName), fmtDur(secs), tostring(math.floor(gained)), runsLeft, fmtDur(eta)))
+end
+end
 end
 end
 self._runStart = nil
