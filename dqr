@@ -765,11 +765,11 @@ if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
 local cf
 local cur = hrp.Position
-local delta = goal - cur
-if delta.Magnitude > 40 then
+local flatDelta = Vector3.new(goal.X - cur.X, 0, goal.Z - cur.Z)
+if flatDelta.Magnitude > 40 then
 FLOAT_STATE = "travel"
-local nextPos = cur + delta.Unit * 30
-local ny = math.max(nextPos.Y, goal.Y, cur.Y)
+local nextPos = cur + flatDelta.Unit * 30
+local ny = math.max(cur.Y, goal.Y)
 nextPos = Vector3.new(nextPos.X, ny, nextPos.Z)
 cf = faceMobCF(nextPos)
 else
