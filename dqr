@@ -537,35 +537,33 @@ local function findAttackSafeSpot(target, offset, preferUp)
 
 	if preferUp then
 		for _, up in ipairs({ 22, 32, 44 }) do
-			local c = mobPos + Vector3.new(0, yOff + up, 0)
+			local c = mobPos + Vector3.new(0, safeY + up, 0)
 			if spotIsClear(c, 6) and spotIsClearEx(c, 2, true) then return c end
 			for a = 0, 3 do
 				local angle = (a / 4) * math.pi * 2
-				local c2 = mobPos + Vector3.new(math.cos(angle) * 8, yOff + up, math.sin(angle) * 8)
+				local c2 = mobPos + Vector3.new(math.cos(angle) * 8, safeY + up, math.sin(angle) * 8)
 				if spotIsClear(c2, 6) and spotIsClearEx(c2, 2, true) then return c2 end
 			end
 		end
 	end
 
+	local safeY = math.max(yOff, 20)
 	local candidates = {
-		mobPos + Vector3.new(0, yOff, 0),
-		mobPos,
-		mobPos + Vector3.new(0, -offset, 0),
-		mobPos + Vector3.new(0, offset, 0),
+		mobPos + Vector3.new(0, safeY, 0),
 	}
 	for _, radius in ipairs({ 6, 10, 15, 20, 26, 32, 40 }) do
 		for a = 0, 7 do
 			local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
 			candidates[#candidates + 1] =
-				mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
+				mobPos + Vector3.new(math.cos(angle) * radius, safeY, math.sin(angle) * radius)
 		end
 	end
 	for _, up in ipairs({ 14, 22, 32, 44 }) do
-		candidates[#candidates + 1] = mobPos + Vector3.new(0, yOff + up, 0)
+		candidates[#candidates + 1] = mobPos + Vector3.new(0, safeY + up, 0)
 		for a = 0, 3 do
 			local angle = (a / 4) * math.pi * 2
 			candidates[#candidates + 1] =
-				mobPos + Vector3.new(math.cos(angle) * 8, yOff + up, math.sin(angle) * 8)
+				mobPos + Vector3.new(math.cos(angle) * 8, safeY + up, math.sin(angle) * 8)
 		end
 	end
 
@@ -584,7 +582,7 @@ local function findAttackSafeSpot(target, offset, preferUp)
 		for a = 0, 7 do
 			local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
 			candidates[#candidates + 1] =
-				mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
+				mobPos + Vector3.new(math.cos(angle) * radius, safeY, math.sin(angle) * radius)
 		end
 	end
 	local best, bestDist = nil, math.huge
@@ -601,7 +599,7 @@ local function findAttackSafeSpot(target, offset, preferUp)
 		local clear = nearestTelegraphDist(c)
 		if clear > farScore then farScore = clear; far = c end
 	end
-	return far or (mobPos + Vector3.new(0, yOff, 0))
+	return far or (mobPos + Vector3.new(0, safeY, 0))
 end
 local MechanicsController
 local FloatController = {
