@@ -194,6 +194,10 @@ if root then
 local d = (root.Position - fromPosition).Magnitude
 if d < best then best = d end
 end
+end
+end
+return best
+end
 local _rootsCache, _rootsT = {}, 0
 local function getMobRootsCached()
 if os.clock() - _rootsT > 0.25 then
@@ -208,10 +212,6 @@ end
 _rootsCache = t
 end
 return _rootsCache
-end
-end
-end
-return best
 end
 local LAST_ABILITY_USE = 0
 local TELEGRAPH_KEYWORDS = {
