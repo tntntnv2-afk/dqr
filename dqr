@@ -194,6 +194,21 @@ if root then
 local d = (root.Position - fromPosition).Magnitude
 if d < best then best = d end
 end
+local _rootsCache, _rootsT = {}, 0
+local function getMobRootsCached()
+if os.clock() - _rootsT > 0.25 then
+_rootsT = os.clock()
+local t = {}
+for _, mob in ipairs(getMobs()) do
+if mob.Parent then
+local root = mob:FindFirstChild("HumanoidRootPart") or mob:FindFirstChild("hitBox") or mob.PrimaryPart
+if root then t[#t + 1] = root end
+end
+end
+_rootsCache = t
+end
+return _rootsCache
+end
 end
 end
 return best
@@ -353,7 +368,13 @@ local _teleCache, _teleScan = {}, 0
 local _teleSeen = {}
 local _teleClass = setmetatable({}, { __mode = "k" })
 local _tracked = setmetatable({}, { __mode = "k" })
+local _teleBorn = setmetatable({}, { __mode = "k" })
 local _trackInit = false
+local function telePartActive(part)
+	if part.Transparency < 0.95 then return true end
+	local born = _teleBorn[part]
+	return born ~= nil and (os.clock() - born) < 1.2
+end
 local function classifyTelegraph(d)
 	local c = _teleClass[d]
 	if c == nil then
@@ -366,13 +387,14 @@ local function initTelegraphTracking()
 	if _trackInit then return end
 	_trackInit = true
 	workspace.DescendantAdded:Connect(function(d)
-		if classifyTelegraph(d) then _tracked[d] = true end
+		if classifyTelegraph(d) then _tracked[d] = true; _teleBorn[d] = os.clock() end
 	end)
 	workspace.DescendantRemoving:Connect(function(d)
-		if _tracked[d] then _tracked[d] = nil; _teleSeen[d] = nil end
+		if _tracked[d] then _tracked[d] = nil; _teleSeen[d] = nil; _teleBorn[d] = nil end
 	end)
+	local initT = os.clock() - 10
 	for _, d in ipairs(workspace:GetDescendants()) do
-		if classifyTelegraph(d) then _tracked[d] = true end
+		if classifyTelegraph(d) then _tracked[d] = true; _teleBorn[d] = initT end
 	end
 end
 local function getTelegraphParts()
@@ -388,7 +410,7 @@ local function getTelegraphParts()
 		local myPos = hrp and hrp.Position
 		for d in pairs(_tracked) do
 			if d.Parent then
-				if d.Transparency < 0.95 then
+				if telePartActive(d) then
 					if not _teleSeen[d] then
 						_teleSeen[d] = now
 						if not nameIsTelegraph(d.Name) then newUnnamed[#newUnnamed + 1] = d end
@@ -430,7 +452,7 @@ local function isMobAttackingNear(pos, range)
 	for _, part in ipairs(getTelegraphParts()) do
 		if part.Parent then
 
-			local active = part.Transparency < 0.95
+			local active = telePartActive(part)
 			if active and partIsFreshThreat(part) and (part.Position - pos).Magnitude <= range then
 				return true
 			end
@@ -442,7 +464,7 @@ end
 local function nearestTelegraphDist(pos)
 	local best = math.huge
 	for _, part in ipairs(getTelegraphParts()) do
-		if part.Parent and part.Transparency < 0.95 and partIsFreshThreat(part) then
+		if part.Parent and telePartActive(part) and partIsFreshThreat(part) then
 			local d = (part.Position - pos).Magnitude
 			if d < best then best = d end
 		end
@@ -465,7 +487,7 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 	margin = margin or 16
 	local flat = Vector2.new(pos.X, pos.Z)
 	for _, part in ipairs(getTelegraphParts()) do
-		if part.Parent and part.Transparency < 0.95 and (ignoreFresh or partIsFreshThreat(part)) then
+		if part.Parent and telePartActive(part) and (ignoreFresh or partIsFreshThreat(part)) then
 			local s = part.Size
 			local rdx = pos.X - part.Position.X
 			local rdz = pos.Z - part.Position.Z
@@ -481,7 +503,7 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 			local mn = math.min(s.X, s.Y, s.Z)
 			local md = s.X + s.Y + s.Z - mx - mn
 			if md > mx * 0.6 and mn < md * 0.34 then
-				if math.sqrt(rdx * rdx + rdz * rdz) <= mx * 0.5 + 4 + bump + margin then
+				if math.sqrt(rdx * rdx + rdz * rdz) <= mx * 0.5 + 6 + bump + margin then
 					return false
 				end
 			else
@@ -495,7 +517,7 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 			if hL > domLen then domLen, domVec = hL, lv end
 			local perpW = hR + hU + hL - domLen
 			local isLong = domLen > perpW * 3 and domLen > 20
-			local horizR = isLong and (perpW * 0.5 + bump) or (domLen * 0.5 + 4 + bump)
+			local horizR = isLong and (perpW * 0.5 + bump) or (domLen * 0.5 + 6 + bump)
 			local dirFlat = Vector2.new(domVec.X, domVec.Z)
 			if isLong and dirFlat.Magnitude >= 0.001 then
 				dirFlat = dirFlat.Unit
@@ -532,9 +554,8 @@ local function findAttackSafeSpot(target, offset)
 	local mobPos = target.Position
 	local yOff = offset
 	local function mobClear(c)
-		for _, mob in ipairs(getMobs()) do
-			local root = mob:FindFirstChild("HumanoidRootPart") or mob:FindFirstChild("hitBox") or mob.PrimaryPart
-			if root then
+		for _, root in ipairs(getMobRootsCached()) do
+			if root.Parent then
 				local dx = c.X - root.Position.X
 				local dz = c.Z - root.Position.Z
 				if dx * dx + dz * dz < 400 then
@@ -795,9 +816,8 @@ end
 end)
 end
 local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 60))
-for _, mob in ipairs(getMobs()) do
-local root = mob:FindFirstChild("HumanoidRootPart") or mob:FindFirstChild("hitBox") or mob.PrimaryPart
-if root then
+for _, root in ipairs(getMobRootsCached()) do
+if root.Parent then
 local ndx = root.Position.X - target.Position.X
 local ndz = root.Position.Z - target.Position.Z
 if ndx * ndx + ndz * ndz < 225 then
