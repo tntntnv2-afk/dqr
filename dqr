@@ -210,12 +210,14 @@ local TELEGRAPH_KEYWORDS = {
 	"groundaura", "horizontalline", "linkbeam", "lifestealbeam",
 	"oneshotbeam", "overheadcannon", "overheadring", "overheadrock",
 	"spearman", "shark", "genericneonball", "spinninglaser",
-	"crystaldrop", "geyser", "projectile", "stab", "onfire", "cursering",
+	"crystaldrop", "geyser", "projectile", "stab", "onfire", "cursering", "harpoon",
 }
 local TELEGRAPH_IGNORE = {
 	"gui", "smoke", "highlight", "spawneffect", "forcefield",
 	"lookaway", "safespot", "passivehighlight", "mark",
 	"particle", "decal", "vfx", "glow", "handle", "dexoridecoy",
+}
+local ABILITY_IGNORE = {
 	"agony orbs", "amethyst beams", "amethyst blast", "arrow barrage", "arrow rain",
 	"blade barrage", "blade fall", "blade storm", "blade throw", "carrot barrage",
 	"chain heal", "chained energy blasts", "concussive blast", "crystalline cannon",
@@ -235,6 +237,42 @@ local TELEGRAPH_IGNORE = {
 local function nameIgnored(n)
 	for _, ig in ipairs(TELEGRAPH_IGNORE) do
 		if n:find(ig, 1, true) then return true end
+	end
+	return false
+end
+local function abilityIgnored(n)
+	for _, ig in ipairs(ABILITY_IGNORE) do
+		if n:find(ig, 1, true) then return true end
+	end
+	return false
+end
+local _enemyTpl, _enemyTplT = {}, 0
+local function refreshEnemyTemplates()
+	if os.clock() - _enemyTplT < 10 then return end
+	_enemyTplT = os.clock()
+	pcall(function()
+		local folder = game:GetService("ReplicatedStorage"):FindFirstChild("enemyProjectiles")
+		if not folder then return end
+		local t = {}
+		for _, c in ipairs(folder:GetChildren()) do
+			t[c.Name:lower()] = true
+		end
+		_enemyTpl = t
+	end)
+end
+local function isEnemyTemplateName(n)
+	refreshEnemyTemplates()
+	return _enemyTpl[n] == true
+end
+local function partIsEnemyTemplate(part)
+	local n = part.Name:lower()
+	if isEnemyTemplateName(n) then return true end
+	local a = part.Parent
+	local depth = 0
+	while a and a ~= workspace and depth < 3 do
+		if isEnemyTemplateName(a.Name:lower()) then return true end
+		a = a.Parent
+		depth = depth + 1
 	end
 	return false
 end
@@ -292,9 +330,14 @@ local function partIsTelegraph(part)
 	if not part:IsA("BasePart") then return false end
 	if ownedByPlayerOrDecoy(part) then return false end
 	local n = part.Name:lower()
-	if isEquippedAbilityFx(n) then return false end
 	if nameIgnored(n) then return false end
+	local isTpl = partIsEnemyTemplate(part)
+	if not isTpl then
+		if isEquippedAbilityFx(n) then return false end
+		if abilityIgnored(n) then return false end
+	end
 	if nameIsTelegraph(n) then return true end
+	if isTpl then return true end
 	local mat = part.Material
 	if (mat == Enum.Material.Neon or mat == Enum.Material.ForceField) and part.Anchored and not part.CanCollide then
 		local s = part.Size
@@ -356,7 +399,7 @@ local function getTelegraphParts()
 				_tracked[d] = nil; _teleSeen[d] = nil
 			end
 		end
-		if #newUnnamed > 8 and (now - LAST_ABILITY_USE) < 0.7 then
+		if #newUnnamed > 10 and (now - LAST_ABILITY_USE) < 0.35 then
 			local drop = {}
 			for _, d in ipairs(newUnnamed) do
 				_teleClass[d] = false; _teleSeen[d] = nil; live[d] = nil; _tracked[d] = nil; drop[d] = true
@@ -808,10 +851,16 @@ local fireM = workspace:FindFirstChild("playerFireCannon")
 local fireRing = fireM and fireM:FindFirstChild("ring")
 local pickupActive = pickup and pickup.Transparency < 0.5
 local fireActive = fireRing and fireRing.Transparency < 0.5
-if not (pickupActive or fireActive) then this._cannonPhase = nil return nil end
+if not (pickupActive or fireActive) then this._cannonPhase = nil this._cannonNearT = nil return nil end
 if this._cannonPhase ~= "fire" and pickupActive then
 local d = (pickup.Position - hrp.Position).Magnitude
-if d <= 5 then this._cannonPhase = "fire" else return pickup.Position end
+if d <= 5 then
+if not this._cannonNearT then this._cannonNearT = os.clock() end
+if os.clock() - this._cannonNearT >= 0.45 then this._cannonPhase = "fire"; this._cannonNearT = nil else return pickup.Position end
+else
+this._cannonNearT = nil
+return pickup.Position
+end
 end
 if fireActive then return fireRing.Position end
 if pickupActive then return pickup.Position end
