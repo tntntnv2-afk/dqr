@@ -244,22 +244,42 @@ local function partIsTelegraph(part)
 end
 
 local _teleCache, _teleScan = {}, 0
+local _teleSeen = {}
+local _teleClass = setmetatable({}, { __mode = "k" })
+local function classifyTelegraph(d)
+	local c = _teleClass[d]
+	if c == nil then
+		c = partIsTelegraph(d)
+		_teleClass[d] = c
+	end
+	return c
+end
 local function getTelegraphParts()
-	if os.clock() - _teleScan > 0.05 then
+	if os.clock() - _teleScan > 0.08 then
 		_teleScan = os.clock()
 		local found = {}
-
-		local roots = { workspace }
-		for _, root in ipairs(roots) do
-			for _, d in ipairs(root:GetDescendants()) do
-				if partIsTelegraph(d) then
-					found[#found + 1] = d
+		local now = os.clock()
+		local live = {}
+		for _, d in ipairs(workspace:GetDescendants()) do
+			if classifyTelegraph(d) then
+				found[#found + 1] = d
+				if d.Transparency < 0.95 then
+					if not _teleSeen[d] then _teleSeen[d] = now end
+					live[d] = true
 				end
 			end
+		end
+		for part in pairs(_teleSeen) do
+			if not live[part] then _teleSeen[part] = nil end
 		end
 		_teleCache = found
 	end
 	return _teleCache
+end
+local function partIsFreshThreat(part)
+	local since = _teleSeen[part]
+	if not since then return false end
+	return (os.clock() - since) <= 10
 end
 
 local function isMobAttackingNear(pos, range)
@@ -267,7 +287,7 @@ local function isMobAttackingNear(pos, range)
 		if part.Parent then
 
 			local active = part.Transparency < 0.95
-			if active and (part.Position - pos).Magnitude <= range then
+			if active and partIsFreshThreat(part) and (part.Position - pos).Magnitude <= range then
 				return true
 			end
 		end
@@ -278,7 +298,7 @@ end
 local function nearestTelegraphDist(pos)
 	local best = math.huge
 	for _, part in ipairs(getTelegraphParts()) do
-		if part.Parent and part.Transparency < 0.95 then
+		if part.Parent and part.Transparency < 0.95 and partIsFreshThreat(part) then
 			local d = (part.Position - pos).Magnitude
 			if d < best then best = d end
 		end
@@ -297,11 +317,11 @@ local function telegraphRadius(part)
 	return r
 end
 
-local function spotIsClear(pos, margin)
+local function spotIsClearEx(pos, margin, ignoreFresh)
 	margin = margin or 16
 	local flat = Vector2.new(pos.X, pos.Z)
 	for _, part in ipairs(getTelegraphParts()) do
-		if part.Parent and part.Transparency < 0.95 then
+		if part.Parent and part.Transparency < 0.95 and (ignoreFresh or partIsFreshThreat(part)) then
 			local s = part.Size
 			local cf = part.CFrame
 			local longAxis = math.max(s.X, s.Z)
@@ -311,7 +331,7 @@ local function spotIsClear(pos, margin)
 			local vHalf = math.abs(cf.UpVector.Y) * s.Y * 0.5
 				+ math.abs(cf.RightVector.Y) * s.X * 0.5
 				+ math.abs(cf.LookVector.Y) * s.Z * 0.5
-			if pos.Y > part.Position.Y + vHalf + math.max(12, horizR + margin) then
+			if pos.Y > part.Position.Y + vHalf + math.max(isLong and 18 or 12, horizR + margin) then
 			else
 			if isLong then
 				local dir = (s.X >= s.Z) and cf.RightVector or cf.LookVector
@@ -343,6 +363,9 @@ local function spotIsClear(pos, margin)
 		end
 	end
 	return true
+end
+local function spotIsClear(pos, margin)
+	return spotIsClearEx(pos, margin, false)
 end
 
 local ATTACK_RANGE = 42
@@ -379,7 +402,7 @@ local function findAttackSafeSpot(target, offset, below)
 		local best, bestDist = nil, math.huge
 		for _, c in ipairs(candidates) do
 			local d = (c - mobPos).Magnitude
-			if d <= ATTACK_RANGE and spotIsClear(c, clearance) then
+			if d <= ATTACK_RANGE and spotIsClear(c, clearance) and spotIsClearEx(c, 2, true) then
 				if d < bestDist then bestDist = d; best = c end
 			end
 		end
@@ -395,7 +418,7 @@ local function findAttackSafeSpot(target, offset, below)
 	end
 	local best, bestDist = nil, math.huge
 	for _, c in ipairs(candidates) do
-		if spotIsClear(c, 14) then
+		if spotIsClear(c, 14) and spotIsClearEx(c, 2, true) then
 			local d = (c - mobPos).Magnitude
 			if d < bestDist then bestDist = d; best = c end
 		end
@@ -556,9 +579,9 @@ if look.Magnitude < 0.05 then return CFrame.new(pos, pos + Vector3.new(0, -1, 0)
 return CFrame.lookAt(pos, target.Position)
 end
 Decoy:ensure(character); Decoy:moveTo(floatCF)
-local attacking = isMobAttackingNear(goal, self.DodgeRange or 60)
+local attacking = isMobAttackingNear(goal, self.DodgeRange or 60) or not spotIsClearEx(goal, 2, true)
 if attacking then
-if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 6) then self._dodgeTarget = findAttackSafeSpot(target, math.max(self.Height, 13), self.Below) end
+if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 6) or not spotIsClearEx(self._dodgeTarget, 2, true) then self._dodgeTarget = findAttackSafeSpot(target, math.max(self.Height, 13), self.Below) end
 FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setLocalTransparency(character, 1)
 if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
