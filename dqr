@@ -173,7 +173,7 @@ local root = mob:FindFirstChild("HumanoidRootPart")
 or mob:FindFirstChild("hitBox")
 or mob.PrimaryPart
 or mob:FindFirstChildWhichIsA("BasePart")
-if root and (fromPosition.Y - root.Position.Y) <= 120 then
+if root and (fromPosition.Y - root.Position.Y) <= 5000 then
 local dist = (root.Position - fromPosition).Magnitude
 if dist < nearestDist then nearestDist = dist; nearestRoot = root end
 end
@@ -698,7 +698,7 @@ local cur = self._target
 if cur and cur.Parent then
 local mob = cur:FindFirstAncestorOfClass("Model")
 local hum = mob and mob:FindFirstChildOfClass("Humanoid")
-if (hum and hum.Health <= 0) or (fromPos.Y - cur.Position.Y) > 120 then
+if (hum and hum.Health <= 0) or (fromPos.Y - cur.Position.Y) > 5000 then
 self._target = nil
 cur = nil
 end
