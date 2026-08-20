@@ -173,7 +173,7 @@ local root = mob:FindFirstChild("HumanoidRootPart")
 or mob:FindFirstChild("hitBox")
 or mob.PrimaryPart
 or mob:FindFirstChildWhichIsA("BasePart")
-if root and (fromPosition.Y - root.Position.Y) <= 50000 then
+if root and (fromPosition.Y - root.Position.Y) <= 500 then
 local dist = (root.Position - fromPosition).Magnitude
 if dist < nearestDist then nearestDist = dist; nearestRoot = root end
 end
@@ -552,7 +552,7 @@ local SAFE_CLEARANCE = 18
 
 local function findAttackSafeSpot(target, offset)
 	local mobPos = target.Position
-	local yOff = math.min(math.max(offset or 10, 5), 15)
+	local yOff = offset
 	local function mobClear(c)
 		for _, root in ipairs(getMobRootsCached()) do
 			if root.Parent then
@@ -619,7 +619,6 @@ end
 local MechanicsController
 local FloatController = {
 Enabled = false, Height = 10, DodgeRange = 60, _conn = nil,
-_stallWait = false,
 }
 local function markAbilityUsed()
 LAST_ABILITY_USE = os.clock()
@@ -699,7 +698,7 @@ local cur = self._target
 if cur and cur.Parent then
 local mob = cur:FindFirstAncestorOfClass("Model")
 local hum = mob and mob:FindFirstChildOfClass("Humanoid")
-if (hum and hum.Health <= 0) or (fromPos.Y - cur.Position.Y) > 50000 then
+if (hum and hum.Health <= 0) or (fromPos.Y - cur.Position.Y) > 500 then
 self._target = nil
 cur = nil
 end
@@ -816,30 +815,19 @@ self._extTop = topY - target.Position.Y
 end
 end)
 end
-
--- FIXED: Calculate height relative to mob position with proper caps
-local h = math.max(self.Height, 10)
-h = math.min(h, 25)
-
--- Check for nearby mobs that might require extra height
+local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 60))
 for _, root in ipairs(getMobRootsCached()) do
-	if root.Parent then
-		local flatDist = Vector2.new(root.Position.X - target.Position.X, root.Position.Z - target.Position.Z).Magnitude
-		if flatDist < 20 then
-			local heightDiff = (root.Position.Y - target.Position.Y)
-			local needH = math.max(h, heightDiff + 8)
-			if needH > h then 
-				h = math.min(needH, 25)
-			end
-		end
-	end
+if root.Parent then
+local ndx = root.Position.X - target.Position.X
+local ndz = root.Position.Z - target.Position.Z
+if ndx * ndx + ndz * ndz < 225 then
+local needH = (root.Position.Y - target.Position.Y) + 13.5
+if needH > h then h = needH end
 end
-
--- Set goal position with proper Y
-local goalY = target.Position.Y + h
-local goal = Vector3.new(target.Position.X, goalY, target.Position.Z)
-
-local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
+end
+end
+if h > 60 then h = 60 end
+local goal = target.Position + Vector3.new(0, h, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
 if flatLook.Magnitude < 0.05 then flatLook = Vector3.new(0, 0, -1) end
 local base = CFrame.lookAt(goal, goal + flatLook.Unit); local floatCF = base * CFrame.Angles(math.rad(-90), 0, 0)
 local function faceMobCF(pos)
@@ -850,10 +838,7 @@ end
 Decoy:ensure(character); Decoy:moveTo(floatCF)
 local attacking = isMobAttackingNear(goal, self.DodgeRange or 60) or not spotIsClearEx(goal, 2, true)
 if attacking then
-if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 4) or not spotIsClearEx(self._dodgeTarget, 2, true) then 
-	local dodgeH = math.max(self.Height - 5, 8)
-	self._dodgeTarget = findAttackSafeSpot(target, dodgeH) 
-end
+if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 4) or not spotIsClearEx(self._dodgeTarget, 2, true) then self._dodgeTarget = findAttackSafeSpot(target, h) end
 FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setTranspCached(character, 1)
 if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
