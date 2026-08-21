@@ -427,7 +427,12 @@ local function initTelegraphTracking()
 	end
 	workspace.DescendantAdded:Connect(function(d)
 		if classifyTelegraph(d) then
-			if abilityNamedDeep(d) and bornAtPlayer(d) then
+			local small = false
+			pcall(function()
+				local s = d.Size
+				small = math.max(s.X, s.Y, s.Z) < 25
+			end)
+			if bornAtPlayer(d) and (small or abilityNamedDeep(d)) then
 				_teleClass[d] = false
 			else
 				_tracked[d] = true; _teleBorn[d] = os.clock()
