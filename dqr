@@ -528,8 +528,12 @@ local function isMobAttackingNear(pos, range)
 		if part.Parent then
 
 			local active = telePartActive(part)
-			if active and partIsFreshThreat(part) and (part.Position - pos).Magnitude <= range then
-				return true
+			if active and partIsFreshThreat(part) then
+				local pp = part.Position
+				local flat = math.sqrt((pp.X - pos.X)^2 + (pp.Z - pos.Z)^2)
+				if flat <= range then
+					return true
+				end
 			end
 		end
 	end
@@ -1119,9 +1123,9 @@ self._walls = setmetatable({}, { __mode = "k" })
 self._buildSpots = setmetatable({}, { __mode = "k" })
 self._supplies = setmetatable({}, { __mode = "k" })
 local function classify(d)
-if d.Name == "wallModel" then
-local pp = d:IsA("BasePart") and d or (d:IsA("Model") and (d.PrimaryPart or d:FindFirstChildWhichIsA("BasePart")))
-if pp then self._walls[d] = pp end
+if d.Name == "wallModel" and d:IsA("Model") then
+local safeBox = d:FindFirstChild("safeBox", true)
+if safeBox and safeBox:IsA("BasePart") then self._walls[d] = safeBox end
 elseif d.Name == "buildBeam" then
 local pp
 if d:IsA("BasePart") then pp = d
@@ -1149,18 +1153,18 @@ end
 function MechanicsController:_wallHidePos(hrp)
 self:_forestTrack()
 local nearest, nd = nil, math.huge
-for _, pp in pairs(self._walls) do
-if pp.Parent then
-local d = (pp.Position - hrp.Position).Magnitude
-if d < 150 and d < nd then nd = d; nearest = pp end
+for model, safeBox in pairs(self._walls) do
+if safeBox.Parent and model.Parent then
+local builtFlag = model:FindFirstChild("built")
+local isBuilt = builtFlag and builtFlag.Value == true
+if isBuilt then
+local d = (safeBox.Position - hrp.Position).Magnitude
+if d < 200 and d < nd then nd = d; nearest = safeBox end
+end
 end
 end
 if not nearest then return nil end
-local boss = getNearestMobRoot(hrp.Position)
-if not boss then return nearest.Position end
-local dir = Vector3.new(nearest.Position.X - boss.Position.X, 0, nearest.Position.Z - boss.Position.Z)
-if dir.Magnitude < 0.05 then return nearest.Position end
-return nearest.Position + dir.Unit * 7
+return Vector3.new(nearest.Position.X, hrp.Position.Y, nearest.Position.Z)
 end
 function MechanicsController:_supplyPos(hrp)
 self:_forestTrack()
@@ -1277,7 +1281,7 @@ if not carrying then
 local wallHide = self:_wallHidePos(hrp)
 if wallHide then
 self._wallHidePosLast = wallHide
-self._wallHideUntil = os.clock() + 4.5
+self._wallHideUntil = os.clock() + 7
 MECH_STATE = "wall - hiding behind"
 return wallHide, "ground"
 elseif self._wallHideUntil and os.clock() < self._wallHideUntil and self._wallHidePosLast then
@@ -1394,68 +1398,123 @@ end)
 end
 task.spawn(function() task.wait(1); pcall(function() AvatarReplacer:SetEnabled(true) end) end)
 task.spawn(function() task.wait(1.5); pcall(function() PotentialTooltip:SetEnabled(true) end) end)
-local PotentialTooltip = { Enabled = false, _conn = nil }
-function PotentialTooltip:_lookupItem(itemName)
+local function rawStat(item, itemType, build)
+if itemType == "weapon" then
+if build == "mage" then
+return tonumber(item.spellPower) or tonumber(item.physicalDamage) or 0
+end
+local phys = tonumber(item.physicalDamage) or 0
+local spell = tonumber(item.spellPower) or 0
+return math.max(phys, spell)
+end
+local h = tonumber(item.health) or 0
+local pp = tonumber(item.physicalPower) or 0
+local sp = tonumber(item.spellPower) or 0
+return h + math.max(pp, sp)
+end
+local function projectedMaxPower(item, itemType, build)
+local base = rawStat(item, itemType, build)
+if base <= 0 then return 0 end
+local maxUp = tonumber(item.maxUpgrades) or 0
+return base + maxUp * 10
+end
+local EquipController = { Enabled = false, Build = "physical", _thread = nil }
+local PotentialTooltip = { Enabled = false, _conn = nil, _gui = nil, _label = nil }
+local function fmtNum(n)
+if n >= 1e12 then return string.format("%.2fT", n/1e12)
+elseif n >= 1e9 then return string.format("%.2fB", n/1e9)
+elseif n >= 1e6 then return string.format("%.2fM", n/1e6)
+elseif n >= 1e3 then return string.format("%.2fK", n/1e3) end
+return tostring(math.floor(n))
+end
+function PotentialTooltip:_scanPanels()
+local pg = LocalPlayer:FindFirstChild("PlayerGui")
+if not pg then return end
+for _, d in ipairs(pg:GetDescendants()) do
+if d:IsA("GuiObject") and d.Visible then
+-- a stat panel contains a label whose text includes "Physical Damage" or "Spell Power" or "Upgrades:"
+local isStatPanel = false
+local nameText = nil
+local labels = {}
+for _, c in ipairs(d:GetDescendants()) do
+if c:IsA("TextLabel") and type(c.Text) == "string" then
+labels[#labels + 1] = c
+local t = c.Text
+if t:find("Physical Damage") or t:find("Spell Power") or t:find("Upgrades") or t:find("REQ Lvl") then
+isStatPanel = true
+end
+end
+end
+if isStatPanel then
+-- the item name is the label whose text matches an inventory item name
+nameText = self:_resolveName(labels)
+if nameText then
+self:_injectInto(d, nameText)
+end
+end
+end
+end
+end
+function PotentialTooltip:_resolveName(labels)
 local remotes = getRemotes()
 local invFn = remotes and remotes:FindFirstChild("reloadInvy")
 if not invFn then return nil end
 local ok, inv = pcall(function() return invFn:InvokeServer() end)
 if not ok or type(inv) ~= "table" then return nil end
-for _, bucketName in ipairs({"weapons","helmets","chests"}) do
-local bucket = inv[bucketName]
+local names = {}
+for _, bn in ipairs({"weapons","helmets","chests"}) do
+for _, item in pairs(inv[bn] or {}) do
+if type(item) == "table" and item.name then names[item.name] = true end
+end
+end
+for _, lbl in ipairs(labels) do
+local t = lbl.Text
+if t and names[t] then return t end
+end
+return nil
+end
+function PotentialTooltip:_injectInto(panel, itemName)
+local item, itemType = self:_lookup(itemName)
+if not item then return end
+local pot = projectedMaxPower(item, itemType, EquipController.Build or "physical")
+if pot <= 0 then return end
+local lbl = panel:FindFirstChild("DexoriPotential")
+if not lbl then
+lbl = Instance.new("TextLabel")
+lbl.Name = "DexoriPotential"
+lbl.BackgroundColor3 = Color3.fromRGB(10, 40, 15)
+lbl.BackgroundTransparency = 0.1
+lbl.Size = UDim2.new(1, 0, 0, 24)
+lbl.Position = UDim2.new(0, 0, 1, 4)
+lbl.Font = Enum.Font.GothamBold
+lbl.TextSize = 16
+lbl.TextColor3 = Color3.fromRGB(130, 255, 150)
+lbl.TextXAlignment = Enum.TextXAlignment.Center
+lbl.ZIndex = 100
+local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(0, 4); corner.Parent = lbl
+local stroke = Instance.new("UIStroke"); stroke.Color = Color3.fromRGB(130,255,150); stroke.Thickness = 1; stroke.Transparency = 0.4; stroke.Parent = lbl
+lbl.Parent = panel
+end
+lbl.Text = "Potential: " .. fmtNum(pot)
+end
+function PotentialTooltip:_lookup(itemName)
+local remotes = getRemotes()
+local invFn = remotes and remotes:FindFirstChild("reloadInvy")
+if not invFn then return nil end
+local ok, inv = pcall(function() return invFn:InvokeServer() end)
+if not ok or type(inv) ~= "table" then return nil end
+for _, bn in ipairs({"weapons","helmets","chests"}) do
+local bucket = inv[bn]
 if type(bucket) == "table" then
 for _, item in pairs(bucket) do
 if type(item) == "table" and item.name == itemName then
-local itemType = bucketName == "weapons" and "weapon" or (bucketName == "helmets" and "helmet" or "chest")
-return item, itemType
+local it = bn == "weapons" and "weapon" or (bn == "helmets" and "helmet" or "chest")
+return item, it
 end
 end
 end
 end
 return nil
-end
-function PotentialTooltip:_inject(mainFrame)
-pcall(function()
-local nameLabel = mainFrame:FindFirstChild("name")
-if not nameLabel or not nameLabel:IsA("TextLabel") then return end
-local item, itemType = self:_lookupItem(nameLabel.Text)
-if not item then return end
-local pot = projectedMaxPower(item, itemType, EquipController.Build or "physical")
-if pot <= 0 then return end
-local existing = mainFrame:FindFirstChild("DexoriPotential")
-local lbl = existing or Instance.new("TextLabel")
-lbl.Name = "DexoriPotential"
-lbl.BackgroundTransparency = 1
-lbl.Size = UDim2.new(1, 0, 0, 16)
-lbl.Position = UDim2.new(0, 0, 1, -18)
-lbl.Font = Enum.Font.GothamBold
-lbl.TextScaled = false
-lbl.TextSize = 13
-lbl.TextColor3 = Color3.fromRGB(120, 255, 140)
-lbl.TextXAlignment = Enum.TextXAlignment.Center
-local function fmt(n)
-if n >= 1e9 then return string.format("%.2fB", n/1e9)
-elseif n >= 1e6 then return string.format("%.2fM", n/1e6)
-elseif n >= 1e3 then return string.format("%.2fK", n/1e3) end
-return tostring(math.floor(n))
-end
-lbl.Text = "Potential: " .. fmt(pot)
-lbl.ZIndex = 10
-lbl.Parent = mainFrame
-end)
-end
-function PotentialTooltip:_scan()
-local pg = LocalPlayer:FindFirstChild("PlayerGui")
-if not pg then return end
-for _, d in ipairs(pg:GetDescendants()) do
-if d:IsA("GuiObject") then
-local hasName = d:FindFirstChild("name")
-local hasStat = d:FindFirstChild("physicalDamage") or d:FindFirstChild("spellPower") or d:FindFirstChild("health") or d:FindFirstChild("upgrades")
-if hasName and hasStat then
-self:_inject(d)
-end
-end
-end
 end
 function PotentialTooltip:SetEnabled(on)
 self.Enabled = on
@@ -1467,8 +1526,8 @@ return
 end
 self._conn = task.spawn(function()
 while self.Enabled do
-pcall(function() self:_scan() end)
-task.wait(0.4)
+pcall(function() self:_scanPanels() end)
+task.wait(0.25)
 end
 end)
 end
@@ -2444,27 +2503,6 @@ StatsController:Start(); pcall(function() KillBrickController:SetEnabled(true) e
 InfoBox:AddButton({ Text = "Rejoin Server", Func = function() pcall(function() game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end) end, })
 local performUnload
 InfoBox:AddButton({ Text = "Unload", Func = function() if performUnload then performUnload() else Library:Unload() end end, Risky = true, })
-local EquipController = { Enabled = false, Build = "physical", _thread = nil }
-local function rawStat(item, itemType, build)
-if itemType == "weapon" then
-if build == "mage" then
-return tonumber(item.spellPower) or tonumber(item.physicalDamage) or 0
-end
-local phys = tonumber(item.physicalDamage) or 0
-local spell = tonumber(item.spellPower) or 0
-return math.max(phys, spell)
-end
-local h = tonumber(item.health) or 0
-local pp = tonumber(item.physicalPower) or 0
-local sp = tonumber(item.spellPower) or 0
-return h + math.max(pp, sp)
-end
-local function projectedMaxPower(item, itemType, build)
-local base = rawStat(item, itemType, build)
-if base <= 0 then return 0 end
-local maxUp = tonumber(item.maxUpgrades) or 0
-return base + maxUp * 10
-end
 local function itemIdFromKey(k)
 local s = tostring(k)
 local num = s:match("(%d+)$")
