@@ -673,9 +673,9 @@ local function findAttackSafeSpot(target, offset, tether)
 		mobPos + Vector3.new(0, -offset, 0),
 		mobPos + Vector3.new(0, offset, 0),
 	}
-	for _, radius in ipairs({ 6, 10, 15, 20, 26, 32, 40 }) do
-		for a = 0, 7 do
-			local angle = (a / 8) * math.pi * 2 + math.random() * 0.3
+	for _, radius in ipairs({ 6, 10, 15, 20, 26, 32, 40, 48, 56, 64 }) do
+		for a = 0, 15 do
+			local angle = (a / 16) * math.pi * 2 + math.random() * 0.2
 			candidates[#candidates + 1] =
 				mobPos + Vector3.new(math.cos(angle) * radius, yOff, math.sin(angle) * radius)
 		end
