@@ -239,6 +239,7 @@ local TELEGRAPH_KEYWORDS = {
 	"spearman", "shark", "genericneonball", "spinninglaser",
 	"crystaldrop", "geyser", "projectile", "stab", "onfire", "cursering", "harpoon",
 	"tsunami", "whirl", "square", "poison", "tornado", "firering",
+	"wizardshot", "wizard", "mushroom", "wizardorb",
 }
 local TELEGRAPH_IGNORE = {
 	"gui", "smoke", "highlight", "spawneffect", "forcefield",
