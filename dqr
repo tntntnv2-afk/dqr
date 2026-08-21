@@ -445,7 +445,7 @@ local function initTelegraphTracking()
 				small = math.max(s.X, s.Y, s.Z) < 25
 			end)
 			local nlow = d.Name:lower()
-			local neverVeto = nlow:find("genericneonball", 1, true) ~= nil or nlow:find("mageorb", 1, true) ~= nil or nlow:find("battlemage", 1, true) ~= nil or nlow:find("wizardshot", 1, true) ~= nil
+			local neverVeto = nlow:find("genericneonball", 1, true) ~= nil
 			if (not neverVeto) and bornAtPlayer(d) and (small or abilityNamedDeep(d)) then
 				_teleClass[d] = false
 			else
@@ -528,31 +528,8 @@ local function isMobAttackingNear(pos, range)
 		if part.Parent then
 
 			local active = telePartActive(part)
-			if active and partIsFreshThreat(part) then
-				local pp = part.Position
-				local s = part.Size
-				local partRadius = math.max(s.X, s.Z) * 0.5
-				local effRange = range + partRadius
-				-- moving-attack lead: use position-delta velocity (works for physics AND tween/CFrame)
-				local vel = _teleVel[part] or Vector3.zero
-				if vel.Magnitude < 1 then
-					pcall(function() local av = part.AssemblyLinearVelocity; if av.Magnitude > vel.Magnitude then vel = av end end)
-				end
-				local speed = vel.Magnitude
-				local checkPositions = { pp }
-				if speed > 3 then
-					checkPositions[#checkPositions + 1] = pp + vel * 0.2
-					checkPositions[#checkPositions + 1] = pp + vel * 0.4
-					checkPositions[#checkPositions + 1] = pp + vel * 0.6
-				end
-				for _, cp in ipairs(checkPositions) do
-					local dy = math.abs(cp.Y - pos.Y)
-					local vtol = 45 + s.Y * 0.5
-					local flat = math.sqrt((cp.X - pos.X)^2 + (cp.Z - pos.Z)^2)
-					if (dy <= vtol and flat <= effRange) or ((cp - pos).Magnitude <= effRange) then
-						return true
-					end
-				end
+			if active and partIsFreshThreat(part) and (part.Position - pos).Magnitude <= range then
+				return true
 			end
 		end
 	end
@@ -895,7 +872,7 @@ dest = mechOverride
 elseif mechMode == "ground" then
 dest = mechOverride + Vector3.new(0, 3, 0)
 else
-local h = math.max(self.Height, 6); dest = mechOverride + Vector3.new(0, h, 0)
+local h = math.max(self.Height, 13); dest = mechOverride + Vector3.new(0, h, 0)
 end
 hrp.CFrame = CFrame.new(dest); self._lastFloatCF = CFrame.new(dest); self._activeCF = CFrame.new(dest)
 self._wasInMechanic = true
@@ -958,18 +935,18 @@ if r then self._tetherR = r end
 end
 end)
 end
-local h = math.max(self.Height, 6, math.min((self._extTop or 0) + 6, 22))
+local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 60))
 for _, root in ipairs(getMobRootsCached()) do
 if root.Parent then
 local ndx = root.Position.X - target.Position.X
 local ndz = root.Position.Z - target.Position.Z
 if ndx * ndx + ndz * ndz < 225 then
-local needH = (root.Position.Y - target.Position.Y) + 6
+local needH = (root.Position.Y - target.Position.Y) + 13.5
 if needH > h then h = needH end
 end
 end
 end
-if h > 25 then h = 25 end
+if h > 60 then h = 60 end
 local goal = target.Position + Vector3.new(0, h, 0); local toMob = target.Position - goal; local flatLook = Vector3.new(toMob.X, 0, toMob.Z)
 if flatLook.Magnitude < 0.05 then flatLook = Vector3.new(0, 0, -1) end
 local base = CFrame.lookAt(goal, goal + flatLook.Unit); local floatCF = base * CFrame.Angles(math.rad(-90), 0, 0)
