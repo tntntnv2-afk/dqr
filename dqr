@@ -444,7 +444,9 @@ local function initTelegraphTracking()
 				local s = d.Size
 				small = math.max(s.X, s.Y, s.Z) < 25
 			end)
-			if bornAtPlayer(d) and (small or abilityNamedDeep(d)) then
+			local nlow = d.Name:lower()
+			local neverVeto = nlow:find("genericneonball", 1, true) ~= nil
+			if (not neverVeto) and bornAtPlayer(d) and (small or abilityNamedDeep(d)) then
 				_teleClass[d] = false
 			else
 				_tracked[d] = true; _teleBorn[d] = os.clock()
@@ -1121,7 +1123,13 @@ if d.Name == "wallModel" then
 local pp = d:IsA("BasePart") and d or (d:IsA("Model") and (d.PrimaryPart or d:FindFirstChildWhichIsA("BasePart")))
 if pp then self._walls[d] = pp end
 elseif d.Name == "buildBeam" then
-local pp = d:IsA("BasePart") and d or (d.Parent and d.Parent:IsA("BasePart") and d.Parent)
+local pp
+if d:IsA("BasePart") then pp = d
+elseif d:IsA("Beam") then
+local a0 = d.Attachment0 or d.Attachment1
+if a0 and a0.Parent and a0.Parent:IsA("BasePart") then pp = a0.Parent end
+elseif d.Parent and d.Parent:IsA("BasePart") then pp = d.Parent
+elseif d.Parent and d.Parent:IsA("Attachment") and d.Parent.Parent and d.Parent.Parent:IsA("BasePart") then pp = d.Parent.Parent end
 if pp then self._buildSpots[d] = pp end
 elseif d.Name == "buildingSupplies" then
 local pp = d:IsA("BasePart") and d or (d:IsA("Model") and (d.PrimaryPart or d:FindFirstChildWhichIsA("BasePart")))
