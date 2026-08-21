@@ -530,8 +530,11 @@ local function isMobAttackingNear(pos, range)
 			local active = telePartActive(part)
 			if active and partIsFreshThreat(part) then
 				local pp = part.Position
+				local dy = math.abs(pp.Y - pos.Y)
 				local flat = math.sqrt((pp.X - pos.X)^2 + (pp.Z - pos.Z)^2)
-				if flat <= range then
+				if dy <= 45 and flat <= range then
+					return true
+				elseif (pp - pos).Magnitude <= range then
 					return true
 				end
 			end
@@ -879,7 +882,14 @@ else
 local h = math.max(self.Height, 13); dest = mechOverride + Vector3.new(0, h, 0)
 end
 hrp.CFrame = CFrame.new(dest); self._lastFloatCF = CFrame.new(dest); self._activeCF = CFrame.new(dest)
+self._wasInMechanic = true
 return
+end
+if self._wasInMechanic then
+self._wasInMechanic = false
+self._dodgeTarget = nil
+self._dodgeBadSince = nil
+self._holdSince = nil
 end
 local prevTarget = self._target
 local target = self:_pickTarget(hrp.Position)
@@ -1427,89 +1437,90 @@ elseif n >= 1e6 then return string.format("%.2fM", n/1e6)
 elseif n >= 1e3 then return string.format("%.2fK", n/1e3) end
 return tostring(math.floor(n))
 end
-function PotentialTooltip:_scanPanels()
+function PotentialTooltip:_buildGui()
+if self._gui and self._gui.Parent then return end
+local sg = Instance.new("ScreenGui")
+sg.Name = "DexoriPotentialGui"
+sg.ResetOnSpawn = false
+sg.DisplayOrder = 2000000
+sg.IgnoreGuiInset = true
+local frame = Instance.new("Frame")
+frame.Name = "box"
+frame.AnchorPoint = Vector2.new(0.5, 0)
+frame.Position = UDim2.new(0.5, 0, 0, 8)
+frame.Size = UDim2.fromOffset(260, 52)
+frame.BackgroundColor3 = Color3.fromRGB(12, 14, 18)
+frame.BackgroundTransparency = 0.05
+frame.BorderSizePixel = 0
+frame.Visible = false
+local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(0, 8); corner.Parent = frame
+local stroke = Instance.new("UIStroke"); stroke.Color = Color3.fromRGB(130, 255, 150); stroke.Thickness = 1.5; stroke.Transparency = 0.25; stroke.Parent = frame
+local title = Instance.new("TextLabel")
+title.BackgroundTransparency = 1
+title.Size = UDim2.new(1, -16, 0, 15)
+title.Position = UDim2.fromOffset(8, 5)
+title.Font = Enum.Font.GothamMedium
+title.TextSize = 10
+title.TextColor3 = Color3.fromRGB(160, 165, 175)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Text = "MAX POTENTIAL"
+title.Parent = frame
+local itemLbl = Instance.new("TextLabel")
+itemLbl.Name = "item"
+itemLbl.BackgroundTransparency = 1
+itemLbl.Size = UDim2.new(0.55, -8, 0, 24)
+itemLbl.Position = UDim2.fromOffset(8, 20)
+itemLbl.Font = Enum.Font.GothamSemibold
+itemLbl.TextSize = 12
+itemLbl.TextColor3 = Color3.fromRGB(220, 220, 230)
+itemLbl.TextXAlignment = Enum.TextXAlignment.Left
+itemLbl.TextTruncate = Enum.TextTruncate.AtEnd
+itemLbl.Text = ""
+itemLbl.Parent = frame
+local valLbl = Instance.new("TextLabel")
+valLbl.Name = "val"
+valLbl.BackgroundTransparency = 1
+valLbl.Size = UDim2.new(0.45, -8, 0, 26)
+valLbl.Position = UDim2.new(0.55, 0, 0, 19)
+valLbl.Font = Enum.Font.GothamBold
+valLbl.TextSize = 20
+valLbl.TextColor3 = Color3.fromRGB(130, 255, 150)
+valLbl.TextXAlignment = Enum.TextXAlignment.Right
+valLbl.Text = ""
+valLbl.Parent = frame
+frame.Parent = sg
+sg.Parent = LocalPlayer:FindFirstChild("PlayerGui") or (gethui and gethui()) or game:GetService("CoreGui")
+self._gui = sg; self._frame = frame; self._itemLbl = itemLbl; self._valLbl = valLbl
+end
+function PotentialTooltip:_findOpenItem()
 local pg = LocalPlayer:FindFirstChild("PlayerGui")
-if not pg then return end
-for _, d in ipairs(pg:GetDescendants()) do
-if d:IsA("GuiObject") and d.Visible then
--- a stat panel contains a label whose text includes "Physical Damage" or "Spell Power" or "Upgrades:"
-local isStatPanel = false
-local nameText = nil
-local labels = {}
-for _, c in ipairs(d:GetDescendants()) do
-if c:IsA("TextLabel") and type(c.Text) == "string" then
-labels[#labels + 1] = c
-local t = c.Text
-if t:find("Physical Damage") or t:find("Spell Power") or t:find("Upgrades") or t:find("REQ Lvl") then
-isStatPanel = true
-end
-end
-end
-if isStatPanel then
--- the item name is the label whose text matches an inventory item name
-nameText = self:_resolveName(labels)
-if nameText then
-self:_injectInto(d, nameText)
-end
-end
-end
-end
-end
-function PotentialTooltip:_resolveName(labels)
+if not pg then return nil end
+-- collect inventory names
 local remotes = getRemotes()
 local invFn = remotes and remotes:FindFirstChild("reloadInvy")
 if not invFn then return nil end
 local ok, inv = pcall(function() return invFn:InvokeServer() end)
 if not ok or type(inv) ~= "table" then return nil end
-local names = {}
+local nameToItem = {}
 for _, bn in ipairs({"weapons","helmets","chests"}) do
-for _, item in pairs(inv[bn] or {}) do
-if type(item) == "table" and item.name then names[item.name] = true end
-end
-end
-for _, lbl in ipairs(labels) do
-local t = lbl.Text
-if t and names[t] then return t end
-end
-return nil
-end
-function PotentialTooltip:_injectInto(panel, itemName)
-local item, itemType = self:_lookup(itemName)
-if not item then return end
-local pot = projectedMaxPower(item, itemType, EquipController.Build or "physical")
-if pot <= 0 then return end
-local lbl = panel:FindFirstChild("DexoriPotential")
-if not lbl then
-lbl = Instance.new("TextLabel")
-lbl.Name = "DexoriPotential"
-lbl.BackgroundColor3 = Color3.fromRGB(10, 40, 15)
-lbl.BackgroundTransparency = 0.1
-lbl.Size = UDim2.new(1, 0, 0, 24)
-lbl.Position = UDim2.new(0, 0, 1, 4)
-lbl.Font = Enum.Font.GothamBold
-lbl.TextSize = 16
-lbl.TextColor3 = Color3.fromRGB(130, 255, 150)
-lbl.TextXAlignment = Enum.TextXAlignment.Center
-lbl.ZIndex = 100
-local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(0, 4); corner.Parent = lbl
-local stroke = Instance.new("UIStroke"); stroke.Color = Color3.fromRGB(130,255,150); stroke.Thickness = 1; stroke.Transparency = 0.4; stroke.Parent = lbl
-lbl.Parent = panel
-end
-lbl.Text = "Potential: " .. fmtNum(pot)
-end
-function PotentialTooltip:_lookup(itemName)
-local remotes = getRemotes()
-local invFn = remotes and remotes:FindFirstChild("reloadInvy")
-if not invFn then return nil end
-local ok, inv = pcall(function() return invFn:InvokeServer() end)
-if not ok or type(inv) ~= "table" then return nil end
-for _, bn in ipairs({"weapons","helmets","chests"}) do
-local bucket = inv[bn]
-if type(bucket) == "table" then
-for _, item in pairs(bucket) do
-if type(item) == "table" and item.name == itemName then
 local it = bn == "weapons" and "weapon" or (bn == "helmets" and "helmet" or "chest")
-return item, it
+for _, item in pairs(inv[bn] or {}) do
+if type(item) == "table" and item.name then nameToItem[item.name] = { item = item, itemType = it } end
+end
+end
+-- find a VISIBLE stat panel (text has Physical Damage / Spell Power / Upgrades)
+-- then within/near it find a label whose text matches an inventory name
+for _, d in ipairs(pg:GetDescendants()) do
+if d:IsA("TextLabel") and d.Visible and type(d.Text) == "string" then
+local t = d.Text
+if t:find("Physical Damage") or t:find("Spell Power") or (t:find("Upgrades") and t:find("/")) then
+-- this panel is open; search its ancestor frame's descendants for the name
+local root = d
+for _ = 1, 4 do if root.Parent and root.Parent:IsA("GuiObject") then root = root.Parent else break end end
+for _, c in ipairs(root:GetDescendants()) do
+if c:IsA("TextLabel") and type(c.Text) == "string" and nameToItem[c.Text] then
+return c.Text, nameToItem[c.Text].item, nameToItem[c.Text].itemType
+end
 end
 end
 end
@@ -1519,15 +1530,27 @@ end
 function PotentialTooltip:SetEnabled(on)
 self.Enabled = on
 if self._conn then self._conn:Disconnect(); self._conn = nil end
-if not on then
-local pg = LocalPlayer:FindFirstChild("PlayerGui")
-if pg then for _, d in ipairs(pg:GetDescendants()) do if d.Name == "DexoriPotential" then pcall(function() d:Destroy() end) end end end
-return
-end
+if not on then if self._frame then self._frame.Visible = false end return end
+self:_buildGui()
 self._conn = task.spawn(function()
 while self.Enabled do
-pcall(function() self:_scanPanels() end)
-task.wait(0.25)
+pcall(function()
+if not (self._gui and self._gui.Parent) then self:_buildGui() end
+local nm, item, itemType = self:_findOpenItem()
+if nm and item then
+local pot = projectedMaxPower(item, itemType, EquipController.Build or "physical")
+if pot > 0 then
+self._itemLbl.Text = nm
+self._valLbl.Text = fmtNum(pot)
+self._frame.Visible = true
+else
+self._frame.Visible = false
+end
+else
+self._frame.Visible = false
+end
+end)
+task.wait(0.2)
 end
 end)
 end
