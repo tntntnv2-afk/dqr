@@ -847,8 +847,9 @@ mechOverride, mechMode = MechanicsController:getOverride()
 end
 if mechOverride then
 local mp = self._mechPos
+local holdingOk = (MECH_STATE == "wall - holding for slam" or MECH_STATE == "safe zone" or MECH_STATE == "wall - hiding behind")
 if mp and (mechOverride - mp).Magnitude < 6 then
-if os.clock() - (self._mechSince or 0) > 12 then
+if not holdingOk and os.clock() - (self._mechSince or 0) > 12 then
 self._mechCooldownUntil = os.clock() + 25
 self._mechPos = nil
 mechOverride = nil
@@ -906,7 +907,7 @@ local topY = target.Position.Y
 for _, p in ipairs(model:GetDescendants()) do
 if p:IsA("BasePart") then
 local s = p.Size
-if math.max(s.X, s.Y, s.Z) <= 18 then
+if math.max(s.X, s.Y, s.Z) <= 30 then
 local t = p.Position.Y + s.Y * 0.5
 if t > topY then topY = t end
 end
@@ -924,7 +925,7 @@ if r then self._tetherR = r end
 end
 end)
 end
-local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 20))
+local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 60))
 for _, root in ipairs(getMobRootsCached()) do
 if root.Parent then
 local ndx = root.Position.X - target.Position.X
