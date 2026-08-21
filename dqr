@@ -173,7 +173,7 @@ local root = mob:FindFirstChild("HumanoidRootPart")
 or mob:FindFirstChild("hitBox")
 or mob.PrimaryPart
 or mob:FindFirstChildWhichIsA("BasePart")
-if root then
+if root and (fromPosition.Y - root.Position.Y) <= 5000 then
 local dist = (root.Position - fromPosition).Magnitude
 if dist < nearestDist then nearestDist = dist; nearestRoot = root end
 end
@@ -229,7 +229,7 @@ local TELEGRAPH_KEYWORDS = {
 	"oneshotbeam", "overheadcannon", "overheadring", "overheadrock",
 	"spearman", "shark", "genericneonball", "spinninglaser",
 	"crystaldrop", "geyser", "projectile", "stab", "onfire", "cursering", "harpoon",
-	"tsunami", "whirl", "square", "poison", "tornado", "firering",
+	"tsunami", "whirl", "square",
 }
 local TELEGRAPH_IGNORE = {
 	"gui", "smoke", "highlight", "spawneffect", "forcefield",
@@ -412,22 +412,9 @@ local function initTelegraphTracking()
 		end)
 		return ok and res == true
 	end
-	local function abilityNamedDeep(d)
-		local n = d.Name:lower()
-		if abilityIgnored(n) or isEquippedAbilityFx(n) then return true end
-		local a = d.Parent
-		local depth = 0
-		while a and a ~= workspace and depth < 3 do
-			local an = a.Name:lower()
-			if abilityIgnored(an) or isEquippedAbilityFx(an) then return true end
-			a = a.Parent
-			depth = depth + 1
-		end
-		return false
-	end
 	workspace.DescendantAdded:Connect(function(d)
 		if classifyTelegraph(d) then
-			if abilityNamedDeep(d) and bornAtPlayer(d) then
+			if bornAtPlayer(d) then
 				_teleClass[d] = false
 			else
 				_tracked[d] = true; _teleBorn[d] = os.clock()
@@ -595,8 +582,7 @@ local ATTACK_RANGE = 42
 
 local SAFE_CLEARANCE = 18
 
-local ARENA_TETHER_NAMES = { ["ancient temple protector"] = 80 }
-local function findAttackSafeSpot(target, offset, tether)
+local function findAttackSafeSpot(target, offset)
 	local mobPos = target.Position
 	local yOff = offset
 	local function mobClear(c)
@@ -648,8 +634,7 @@ local function findAttackSafeSpot(target, offset, tether)
 	end
 	local best, bestDist = nil, math.huge
 	for _, c in ipairs(candidates) do
-		local cFlat = Vector2.new(c.X - mobPos.X, c.Z - mobPos.Z).Magnitude
-		if (not tether or cFlat <= tether) and spotIsClear(c, 14) and spotIsClearEx(c, 2, true) and mobClear(c) then
+		if spotIsClear(c, 14) and spotIsClearEx(c, 2, true) and mobClear(c) then
 			local d = (c - mobPos).Magnitude
 			if d < bestDist then bestDist = d; best = c end
 		end
@@ -658,11 +643,8 @@ local function findAttackSafeSpot(target, offset, tether)
 
 	local far, farScore = nil, -1
 	for _, c in ipairs(candidates) do
-		local cFlat = Vector2.new(c.X - mobPos.X, c.Z - mobPos.Z).Magnitude
-		if not tether or cFlat <= tether then
-			local clear = nearestTelegraphDist(c)
-			if clear > farScore then farScore = clear; far = c end
-		end
+		local clear = nearestTelegraphDist(c)
+		if clear > farScore then farScore = clear; far = c end
 	end
 	return far or (mobPos + Vector3.new(0, yOff, 0))
 end
@@ -748,7 +730,7 @@ local cur = self._target
 if cur and cur.Parent then
 local mob = cur:FindFirstAncestorOfClass("Model")
 local hum = mob and mob:FindFirstChildOfClass("Humanoid")
-if hum and hum.Health <= 0 then
+if (hum and hum.Health <= 0) or (fromPos.Y - cur.Position.Y) > 5000 then
 self._target = nil
 cur = nil
 end
@@ -864,14 +846,6 @@ end
 self._extTop = topY - target.Position.Y
 end
 end)
-self._tetherR = nil
-pcall(function()
-local model = target:FindFirstAncestorOfClass("Model")
-if model then
-local r = ARENA_TETHER_NAMES[model.Name:lower()]
-if r then self._tetherR = r end
-end
-end)
 end
 local h = math.max(self.Height, 13, math.min((self._extTop or 0) + 6, 60))
 for _, root in ipairs(getMobRootsCached()) do
@@ -896,7 +870,7 @@ end
 Decoy:ensure(character); Decoy:moveTo(floatCF)
 local attacking = isMobAttackingNear(goal, self.DodgeRange or 60) or not spotIsClearEx(goal, 2, true)
 if attacking then
-if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 4) or not spotIsClearEx(self._dodgeTarget, 2, true) then self._dodgeTarget = findAttackSafeSpot(target, h, self._tetherR) end
+if not self._dodgeTarget or not spotIsClear(self._dodgeTarget, 4) or not spotIsClearEx(self._dodgeTarget, 2, true) then self._dodgeTarget = findAttackSafeSpot(target, h) end
 FLOAT_STATE = "DODGE"; Decoy:setVisible(true); setTranspCached(character, 1)
 if hrp.Anchored then hrp.Anchored = false end
 hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
@@ -1047,56 +1021,6 @@ if nearest > bestScore then bestScore = nearest; best = cand end
 end
 return best
 end
-function MechanicsController:_forestTrack()
-if self._forestInit then return end
-self._forestInit = true
-self._walls = setmetatable({}, { __mode = "k" })
-self._buildSpots = setmetatable({}, { __mode = "k" })
-local function classify(d)
-if d.Name == "wallModel" then
-local pp = d:IsA("BasePart") and d or (d:IsA("Model") and (d.PrimaryPart or d:FindFirstChildWhichIsA("BasePart")))
-if pp then self._walls[d] = pp end
-elseif d.Name == "buildBeam" then
-local pp = d:IsA("BasePart") and d or (d.Parent and d.Parent:IsA("BasePart") and d.Parent)
-if pp then self._buildSpots[d] = pp end
-end
-end
-workspace.DescendantAdded:Connect(classify)
-workspace.DescendantRemoving:Connect(function(d)
-if self._walls[d] then self._walls[d] = nil end
-if self._buildSpots[d] then self._buildSpots[d] = nil end
-end)
-for _, d in ipairs(workspace:GetDescendants()) do
-pcall(classify, d)
-end
-end
-function MechanicsController:_wallHidePos(hrp)
-self:_forestTrack()
-local nearest, nd = nil, math.huge
-for _, pp in pairs(self._walls) do
-if pp.Parent then
-local d = (pp.Position - hrp.Position).Magnitude
-if d < 150 and d < nd then nd = d; nearest = pp end
-end
-end
-if not nearest then return nil end
-local boss = getNearestMobRoot(hrp.Position)
-if not boss then return nearest.Position end
-local dir = Vector3.new(nearest.Position.X - boss.Position.X, 0, nearest.Position.Z - boss.Position.Z)
-if dir.Magnitude < 0.05 then return nearest.Position end
-return nearest.Position + dir.Unit * 7
-end
-function MechanicsController:_buildSpotPos(hrp)
-self:_forestTrack()
-local nearest, nd = nil, math.huge
-for _, pp in pairs(self._buildSpots) do
-if pp.Parent then
-local d = (pp.Position - hrp.Position).Magnitude
-if d < 300 and d < nd then nd = d; nearest = pp end
-end
-end
-return nearest and nearest.Position or nil
-end
 function MechanicsController:_shieldPos()
 local this = self
 local ok, pos, mode = pcall(function()
@@ -1173,11 +1097,6 @@ if safe then
 MECH_STATE = "safe zone"
 return safe, "ground"
 end
-local wallHide = self:_wallHidePos(hrp)
-if wallHide then
-MECH_STATE = "wall - hiding behind"
-return wallHide, "ground"
-end
 local shield, shieldMode = self:_shieldPos()
 if shield then
 MECH_STATE = "shield"
@@ -1187,13 +1106,6 @@ local cannon = self:_cannonPos(hrp)
 if cannon then
 MECH_STATE = "cannon"
 return cannon, "ground"
-end
-if character:FindFirstChild("firstBossSupplyOverhead", true) then
-local spot = self:_buildSpotPos(hrp)
-if spot then
-MECH_STATE = "supplies - building"
-return spot, "ground"
-end
 end
 if characterIsMarked(character) then
 local away = farthestPointFromPlayers(character)
