@@ -239,7 +239,7 @@ local TELEGRAPH_KEYWORDS = {
 	"spearman", "shark", "genericneonball", "spinninglaser",
 	"crystaldrop", "geyser", "projectile", "stab", "onfire", "cursering", "harpoon",
 	"tsunami", "whirl", "square", "poison", "tornado", "firering",
-	"wizardshot", "wizard", "mushroom", "wizardorb",
+	"wizardshot", "wizard", "mushroom", "wizardorb", "battlemage", "battlemageorb",
 }
 local TELEGRAPH_IGNORE = {
 	"gui", "smoke", "highlight", "spawneffect", "forcefield",
@@ -445,7 +445,7 @@ local function initTelegraphTracking()
 				small = math.max(s.X, s.Y, s.Z) < 25
 			end)
 			local nlow = d.Name:lower()
-			local neverVeto = nlow:find("genericneonball", 1, true) ~= nil
+			local neverVeto = nlow:find("genericneonball", 1, true) ~= nil or nlow:find("mageorb", 1, true) ~= nil or nlow:find("battlemage", 1, true) ~= nil or nlow:find("wizardshot", 1, true) ~= nil
 			if (not neverVeto) and bornAtPlayer(d) and (small or abilityNamedDeep(d)) then
 				_teleClass[d] = false
 			else
@@ -1393,6 +1393,85 @@ end
 end)
 end
 task.spawn(function() task.wait(1); pcall(function() AvatarReplacer:SetEnabled(true) end) end)
+task.spawn(function() task.wait(1.5); pcall(function() PotentialTooltip:SetEnabled(true) end) end)
+local PotentialTooltip = { Enabled = false, _conn = nil }
+function PotentialTooltip:_lookupItem(itemName)
+local remotes = getRemotes()
+local invFn = remotes and remotes:FindFirstChild("reloadInvy")
+if not invFn then return nil end
+local ok, inv = pcall(function() return invFn:InvokeServer() end)
+if not ok or type(inv) ~= "table" then return nil end
+for _, bucketName in ipairs({"weapons","helmets","chests"}) do
+local bucket = inv[bucketName]
+if type(bucket) == "table" then
+for _, item in pairs(bucket) do
+if type(item) == "table" and item.name == itemName then
+local itemType = bucketName == "weapons" and "weapon" or (bucketName == "helmets" and "helmet" or "chest")
+return item, itemType
+end
+end
+end
+end
+return nil
+end
+function PotentialTooltip:_inject(mainFrame)
+pcall(function()
+local nameLabel = mainFrame:FindFirstChild("name")
+if not nameLabel or not nameLabel:IsA("TextLabel") then return end
+local item, itemType = self:_lookupItem(nameLabel.Text)
+if not item then return end
+local pot = projectedMaxPower(item, itemType, EquipController.Build or "physical")
+if pot <= 0 then return end
+local existing = mainFrame:FindFirstChild("DexoriPotential")
+local lbl = existing or Instance.new("TextLabel")
+lbl.Name = "DexoriPotential"
+lbl.BackgroundTransparency = 1
+lbl.Size = UDim2.new(1, 0, 0, 16)
+lbl.Position = UDim2.new(0, 0, 1, -18)
+lbl.Font = Enum.Font.GothamBold
+lbl.TextScaled = false
+lbl.TextSize = 13
+lbl.TextColor3 = Color3.fromRGB(120, 255, 140)
+lbl.TextXAlignment = Enum.TextXAlignment.Center
+local function fmt(n)
+if n >= 1e9 then return string.format("%.2fB", n/1e9)
+elseif n >= 1e6 then return string.format("%.2fM", n/1e6)
+elseif n >= 1e3 then return string.format("%.2fK", n/1e3) end
+return tostring(math.floor(n))
+end
+lbl.Text = "Potential: " .. fmt(pot)
+lbl.ZIndex = 10
+lbl.Parent = mainFrame
+end)
+end
+function PotentialTooltip:_scan()
+local pg = LocalPlayer:FindFirstChild("PlayerGui")
+if not pg then return end
+for _, d in ipairs(pg:GetDescendants()) do
+if d:IsA("GuiObject") then
+local hasName = d:FindFirstChild("name")
+local hasStat = d:FindFirstChild("physicalDamage") or d:FindFirstChild("spellPower") or d:FindFirstChild("health") or d:FindFirstChild("upgrades")
+if hasName and hasStat then
+self:_inject(d)
+end
+end
+end
+end
+function PotentialTooltip:SetEnabled(on)
+self.Enabled = on
+if self._conn then self._conn:Disconnect(); self._conn = nil end
+if not on then
+local pg = LocalPlayer:FindFirstChild("PlayerGui")
+if pg then for _, d in ipairs(pg:GetDescendants()) do if d.Name == "DexoriPotential" then pcall(function() d:Destroy() end) end end end
+return
+end
+self._conn = task.spawn(function()
+while self.Enabled do
+pcall(function() self:_scan() end)
+task.wait(0.4)
+end
+end)
+end
 local StreamerMode = { Enabled = false, _conn = nil, _addConn = nil, _tick = 0, _names = {} }
 function StreamerMode:_scrubGui(rootGui)
 for _, d in ipairs(rootGui:GetDescendants()) do
@@ -2369,27 +2448,27 @@ local EquipController = { Enabled = false, Build = "physical", _thread = nil }
 local function rawStat(item, itemType, build)
 if itemType == "weapon" then
 if build == "mage" then
-return tonumber(item.spellPower) or tonumber(item.spellDamage)
-or tonumber(item.physicalDamage) or tonumber(item.damage) or 0
+return tonumber(item.spellPower) or tonumber(item.physicalDamage) or 0
 end
-return tonumber(item.physicalDamage) or tonumber(item.damage)
-or tonumber(item.spellPower) or 0
+local phys = tonumber(item.physicalDamage) or 0
+local spell = tonumber(item.spellPower) or 0
+return math.max(phys, spell)
 end
-local d = tonumber(item.defence) or 0; local h = tonumber(item.health) or 0; local extra = 0
-if build == "mage" then extra = tonumber(item.spellPower) or 0 else extra = tonumber(item.physicalDamage) or 0 end
-return d + h * 0.5 + extra
+local h = tonumber(item.health) or 0
+local pp = tonumber(item.physicalPower) or 0
+local sp = tonumber(item.spellPower) or 0
+return h + math.max(pp, sp)
 end
-local RARITY_MULT = {
-common = 1, uncommon = 1.15, rare = 1.35, epic = 1.6, legendary = 2, ultimate = 2.5,
-}
 local function projectedMaxPower(item, itemType, build)
 local base = rawStat(item, itemType, build)
 if base <= 0 then return 0 end
-local cur = tonumber(item.currentUpgrade) or 0; local max = tonumber(item.maxUpgrades) or 0; local perLevel = 0.08
-local projected
-if max > 0 and cur >= 0 then local baseAtZero = base / (1 + cur * perLevel); projected = baseAtZero * (1 + max * perLevel) else projected = base end
-local rar = item.rarity and tostring(item.rarity):lower() or ""; projected = projected * (RARITY_MULT[rar] or 1)
-return projected
+local maxUp = tonumber(item.maxUpgrades) or 0
+return base + maxUp * 10
+end
+local function itemIdFromKey(k)
+local s = tostring(k)
+local num = s:match("(%d+)$")
+return num and tonumber(num) or nil
 end
 function EquipController:EquipBestOnce()
 local remotes = getRemotes(); local invFn = remotes:FindFirstChild("reloadInvy"); local equip = remotes:FindFirstChild("equipItem")
@@ -2400,16 +2479,17 @@ local buckets = { weapons = "weapon", chests = "chest", helmets = "helmet" }
 for bucketName, itemType in pairs(buckets) do
 local bucket = inv[bucketName]
 if type(bucket) == "table" then
-local best, bestPow, equippedNum, equippedPow = nil, -1, nil, 0
-for _, item in pairs(bucket) do
+local bestId, bestPow, equippedId, equippedPow = nil, -1, nil, 0
+for key, item in pairs(bucket) do
 if type(item) == "table" then
+local id = itemIdFromKey(key)
 local pow = projectedMaxPower(item, itemType, self.Build)
-if item.equipped == true then equippedNum = tonumber(item.uniqueItemNum); equippedPow = pow end
-if pow > bestPow then bestPow = pow; best = tonumber(item.uniqueItemNum) end
+if item.equipped == true then equippedId = id; equippedPow = pow end
+if pow > bestPow then bestPow = pow; bestId = id end
 end
 end
-if best and best ~= equippedNum and bestPow > equippedPow * 1.02 then
-pcall(function() equip:InvokeServer(itemType, best) end)
+if bestId and bestId ~= equippedId and bestPow > equippedPow * 1.02 then
+pcall(function() equip:InvokeServer(itemType, bestId) end)
 task.wait(0.3)
 end
 end
@@ -2421,15 +2501,39 @@ if self._thread then task.cancel(self._thread) self._thread = nil end
 if on then
 self._thread = task.spawn(function()
 while true do
-if workspace:FindFirstChild("dungeon") == nil then
 pcall(function() self:EquipBestOnce() end)
-end
-task.wait(20)
+pcall(function() if UpgradeController and UpgradeController.UpgradeEquipped then UpgradeController:UpgradeEquipped() end end)
+task.wait(8)
 end
 end)
 end
 end
 local UpgradeController = { Enabled = false, MaxSpend = 100000, Build = "physical", _thread = nil }
+function UpgradeController:UpgradeEquipped()
+local remotes = getRemotes(); local invFn = remotes:FindFirstChild("reloadInvy"); local upgrade = remotes:FindFirstChild("upgradeItem")
+if not invFn or not upgrade then return end
+local ok, inv = pcall(function() return invFn:InvokeServer() end)
+if not ok or type(inv) ~= "table" then return end
+local buckets = { weapons = "weapon", chests = "chest", helmets = "helmet" }
+for bucketName, itemType in pairs(buckets) do
+local bucket = inv[bucketName]
+if type(bucket) == "table" then
+for key, item in pairs(bucket) do
+if type(item) == "table" and item.equipped == true then
+local cur = tonumber(item.currentUpgrade) or 0
+local max = tonumber(item.maxUpgrades) or 0
+if max > 0 and cur < max then
+local id = tonumber(tostring(key):match("(%d+)$"))
+local stat
+if itemType == "weapon" then stat = (self.Build == "mage") and "spell" or "physical" else stat = "health" end
+local remaining = max - cur
+pcall(function() upgrade:FireServer(itemType, id, stat, remaining, "spendAll") end)
+end
+end
+end
+end
+end
+end
 function UpgradeController:UpgradeOnce()
 local remotes = getRemotes(); local invFn = remotes:FindFirstChild("reloadInvy"); local upgrade = remotes:FindFirstChild("upgradeItem")
 if not invFn or not upgrade then return end
