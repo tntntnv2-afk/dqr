@@ -1,4 +1,5 @@
 -- made by ryoichi
+local osClock, mathMax, mathMin, mathSqrt = os.clock, math.max, math.min, math.sqrt
 local STREAMER_ALIAS = "Dexori on top"
 task.spawn(function()
 local plrs = game:GetService("Players")
@@ -119,27 +120,22 @@ Main   = Window:AddTab("Main", "sword"), Misc   = Window:AddTab("Misc", "castle"
 }
 local mobCache, lastScan = {}, 0
 local MOB_DEBUG_COUNT = 0
-local _containerCache, _containerT = {}, 0
+local _containerCache, _containerT = nil, 0
+local CONTAINER_NAMES = { "enemies", "Enemies", "Active", "enemyPool" }
 local function getEnemyContainers()
-if os.clock() - _containerT <= 3 and #_containerCache > 0 then
--- drop any stale (removed) containers cheaply; re-walk only if all gone
-local stillValid = {}
-for _, f in ipairs(_containerCache) do if f.Parent then stillValid[#stillValid + 1] = f end end
-if #stillValid > 0 then return stillValid end
-end
-_containerT = os.clock()
-local list, seen = {}, {}
+if _containerCache and (osClock() - _containerT) < 5 then return _containerCache end
+local list, seen, ln = {}, {}, 0
 local function add(f)
-if f and not seen[f] then seen[f] = true; table.insert(list, f) end
+if f and not seen[f] then seen[f] = true; ln = ln + 1; list[ln] = f end
 end
-for _, n in ipairs({ "enemies", "Enemies", "Active", "enemyPool" }) do
+for _, n in ipairs(CONTAINER_NAMES) do
 add(workspace:FindFirstChild(n))
 end
 local dungeon = workspace:FindFirstChild("dungeon"); local root = dungeon or workspace
 for _, d in ipairs(root:GetDescendants()) do
 if d:IsA("Folder") and d.Name:lower():find("enemy") then add(d) end
 end
-_containerCache = list
+_containerCache = list; _containerT = osClock()
 return list
 end
 local function looksLikeEnemy(model, character)
@@ -158,13 +154,15 @@ local function scanForMobs()
 local mobs, added = {}, {}
 local character = LocalPlayer.Character
 for _, container in ipairs(getEnemyContainers()) do
+if container.Parent then
 for _, desc in ipairs(container:GetDescendants()) do
 if looksLikeEnemy(desc, character) then
 local top = desc
 while top.Parent and top.Parent ~= container and top.Parent:IsA("Model") do
 top = top.Parent
 end
-if not added[top] then added[top] = true; table.insert(mobs, top) end
+if not added[top] then added[top] = true; mobs[#mobs + 1] = top end
+end
 end
 end
 end
@@ -172,13 +170,13 @@ MOB_DEBUG_COUNT = #mobs
 return mobs
 end
 local function getMobs()
-if os.clock() - lastScan > 0.75 then lastScan = os.clock(); mobCache = scanForMobs() end
+if osClock() - lastScan > 0.75 then lastScan = osClock(); mobCache = scanForMobs() end
 return mobCache
 end
 local _liveRoots, _liveRootsT = {}, 0
 local function getLiveRoots()
-if os.clock() - _liveRootsT > 0.35 then
-_liveRootsT = os.clock()
+if osClock() - _liveRootsT > 0.35 then
+_liveRootsT = osClock()
 local t = {}
 for _, mob in ipairs(getMobs()) do
 if mob.Parent then
@@ -218,8 +216,8 @@ return best
 end
 local _rootsCache, _rootsT = {}, 0
 local function getMobRootsCached()
-if os.clock() - _rootsT > 0.25 then
-_rootsT = os.clock()
+if osClock() - _rootsT > 0.25 then
+_rootsT = osClock()
 local t = {}
 for _, mob in ipairs(getMobs()) do
 if mob.Parent then
@@ -325,13 +323,21 @@ local function partIsEnemyTemplate(part)
 	end
 	return false
 end
+local _nameTeleCache, _nameTeleCount = {}, 0
 local function nameIsTelegraph(name)
 	local n = (name or ""):lower()
-	if nameIgnored(n) then return false end
-	for _, kw in ipairs(TELEGRAPH_KEYWORDS) do
-		if n:find(kw, 1, true) then return true end
+	local hit = _nameTeleCache[n]
+	if hit ~= nil then return hit end
+	local res = false
+	if not nameIgnored(n) then
+		for _, kw in ipairs(TELEGRAPH_KEYWORDS) do
+			if n:find(kw, 1, true) then res = true break end
+		end
 	end
-	return false
+	if _nameTeleCount < 600 then
+		_nameTeleCache[n] = res; _nameTeleCount = _nameTeleCount + 1
+	end
+	return res
 end
 local function ownedByPlayerOrDecoy(part)
 	local a = part.Parent
@@ -406,7 +412,7 @@ local _trackInit = false
 local function telePartActive(part)
 	if part.Transparency < 0.95 then return true end
 	local born = _teleBorn[part]
-	return born ~= nil and (os.clock() - born) < 1.2
+	return born ~= nil and (osClock() - born) < 1.2
 end
 local function classifyTelegraph(d)
 	local c = _teleClass[d]
@@ -471,8 +477,8 @@ local function initTelegraphTracking()
 	end
 end
 local function getTelegraphParts()
-	if os.clock() - _teleScan > 0.08 then
-		_teleScan = os.clock()
+	if osClock() - _teleScan > 0.08 then
+		_teleScan = osClock()
 		initTelegraphTracking()
 		local found = {}
 		local now = os.clock()
@@ -529,7 +535,7 @@ end
 local function partIsFreshThreat(part)
 	local since = _teleSeen[part]
 	if not since then return false end
-	return (os.clock() - since) <= 10
+	return (osClock() - since) <= 10
 end
 
 local function isMobAttackingNear(pos, range)
@@ -567,6 +573,22 @@ local function telegraphRadius(part)
 	return r
 end
 
+local _partBump = setmetatable({}, { __mode = "k" })
+local function partNameBump(part)
+	local bump = _partBump[part]
+	if bump ~= nil then return bump end
+	local n = part.Name:lower()
+	bump = 0
+	if n:find("tentacle") or n:find("kraken") or n:find("swing")
+	or n:find("slam") or n:find("blade") then
+		bump = 8
+	end
+	if n:find("orb", 1, true) or n:find("shot", 1, true) or n:find("missile", 1, true) then
+		bump = bump + 12
+	end
+	_partBump[part] = bump
+	return bump
+end
 local function spotIsClearEx(pos, margin, ignoreFresh)
 	margin = margin or 16
 	local flat = Vector2.new(pos.X, pos.Z)
@@ -575,17 +597,9 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 			local s = part.Size
 			local rdx = pos.X - part.Position.X
 			local rdz = pos.Z - part.Position.Z
-			local reach = math.max(s.X, s.Y, s.Z) * 0.5 + margin + 10
+			local reach = mathMax(s.X, s.Y, s.Z) * 0.5 + margin + 10
 			if rdx * rdx + rdz * rdz <= reach * reach then
-			local n = part.Name:lower()
-			local bump = 0
-			if n:find("tentacle") or n:find("kraken") or n:find("swing")
-			or n:find("slam") or n:find("blade") then
-				bump = 8
-			end
-			if n:find("orb", 1, true) or n:find("shot", 1, true) or n:find("missile", 1, true) then
-				bump = bump + 12
-			end
+			local bump = partNameBump(part)
 			local led
 			local vel = _teleVel[part]
 			if vel and vel.Magnitude > 8 then
@@ -593,27 +607,27 @@ local function spotIsClearEx(pos, margin, ignoreFresh)
 				if lead.Magnitude > 30 then lead = lead.Unit * 30 end
 				led = part.Position + lead
 			end
-			local mx = math.max(s.X, s.Y, s.Z)
-			local mn = math.min(s.X, s.Y, s.Z)
+			local mx = mathMax(s.X, s.Y, s.Z)
+			local mn = mathMin(s.X, s.Y, s.Z)
 			local md = s.X + s.Y + s.Z - mx - mn
 			if md > mx * 0.6 and mn < md * 0.34 then
 				local discR = mx * 0.5 + 6 + bump + margin
-				if math.sqrt(rdx * rdx + rdz * rdz) <= discR then
+				if rdx * rdx + rdz * rdz <= discR * discR then
 					return false
 				end
 				if led then
 					local ldx = pos.X - led.X
 					local ldz = pos.Z - led.Z
-					if math.sqrt(ldx * ldx + ldz * ldz) <= discR then
+					if ldx * ldx + ldz * ldz <= discR * discR then
 						return false
 					end
 				end
 			else
 			local cf = part.CFrame
 			local rv, uv, lv = cf.RightVector, cf.UpVector, cf.LookVector
-			local hR = math.sqrt(rv.X * rv.X + rv.Z * rv.Z) * s.X
-			local hU = math.sqrt(uv.X * uv.X + uv.Z * uv.Z) * s.Y
-			local hL = math.sqrt(lv.X * lv.X + lv.Z * lv.Z) * s.Z
+			local hR = mathSqrt(rv.X * rv.X + rv.Z * rv.Z) * s.X
+			local hU = mathSqrt(uv.X * uv.X + uv.Z * uv.Z) * s.Y
+			local hL = mathSqrt(lv.X * lv.X + lv.Z * lv.Z) * s.Z
 			local domLen, domVec = hR, rv
 			if hU > domLen then domLen, domVec = hU, uv end
 			if hL > domLen then domLen, domVec = hL, lv end
@@ -778,7 +792,8 @@ end
 self.visible = false; self:setVisible(false)
 end
 function Decoy:moveTo(cf)
-if self.model then pcall(function() self.model:PivotTo(cf) end) end
+local m = self.model
+if m then pcall(m.PivotTo, m, cf) end
 end
 function Decoy:setVisible(on)
 if self.visible == on or not self.model then return end
@@ -2891,4 +2906,3 @@ end)
 notify({
 Title = "Dexori", Description = "Loaded. Press Right-Ctrl to toggle.", Time = 5,
 })
-
